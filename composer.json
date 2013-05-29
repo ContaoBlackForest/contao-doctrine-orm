@@ -1,0 +1,48 @@
+{
+	"name":"bit3/contao-doctrine-orm",
+	"description":"Doctrine ORM for Contao CMS",
+	"keywords":["contao", "doctrine", "orm"],
+	"type":"contao-module",
+	"license":"LGPL-3.0+",
+	"authors":[
+		{
+			"name":"Tristan Lins",
+			"email":"tristan.lins@bit3.de",
+			"homepage":"http://bit3.de",
+			"role":"Developer"
+		}
+	],
+	"support":{
+		"email":"info@bit3.de",
+		"issues":"https://github.com/bit3/contao-doctrine/issues",
+		"irc":"irc://irc.freenode.org/contao.dev",
+		"source":"https://github.com/bit3/contao-doctrine"
+	},
+	"require":{
+		"php":">=5.3",
+		"contao/core": "2.11.*",
+		"bit3/contao-doctrine-dbal": "~2.3",
+		"bit3/contao-dependency-container": "~1",
+		"doctrine/orm": "~2.3"
+	},
+	"require-dev":{
+		"phpunit/phpunit":"3.7.*",
+		"squizlabs/php_codesniffer":"1.*",
+		"bit3/php-coding-standard":"@dev"
+	},
+	"autoload":{
+		"psr-0":{
+			"Contao\\Doctrine\\ORM": "src/"
+		}
+	},
+	"extra": {
+		"contao": {
+			"sources": {
+				"contao": "system/modules/doctrine-orm"
+			}
+		},
+		"branch-alias": {
+			"dev-master": "2.3.x-dev"
+		}
+	}
+}
