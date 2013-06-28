@@ -5,12 +5,22 @@ This extension provide [Doctrine ORM](http://www.doctrine-project.org) in the [C
 It provide an entity manager via the service `$container['doctrine.orm.entityManager']`.
 To use the Doctrine Connection within the Contao Database Framework, use [bit3/contao-doctrine-dbal-driver](https://github.com/bit3/contao-doctrine-dbal-driver).
 
-Register entities
------------------
+Entity mapping
+--------------
 
+To register an entity table, add to your **config.php**:
 ```php
-$GLOBALS['DOCTRINE_ENTITIES']['MyEntityClassName'] = 'tl_entity_table';
+$GLOBALS['DOCTRINE_ENTITIES'][] = 'tl_my_entity_type';
 ```
+
+The table name will be converted to `MyEntityType`.
+
+Custom Namespaces can be mapped by a *table name prefix* to *class namespace* map:
+```php
+$GLOBALS['DOCTRINE_ENTITY_NAMESPACE_MAP']['tl_my_entity'] = 'My\Entity';
+```
+
+Now the table name will be converted to `My\Entity\Type`.
 
 Configure entities via DCA
 --------------------------
