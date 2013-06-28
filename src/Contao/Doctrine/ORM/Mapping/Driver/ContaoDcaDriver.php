@@ -149,20 +149,22 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 			$metadata->mapField($fieldMapping);
 		}
 
-		global $container;
+		if (TL_MODE == 'BE') {
+			global $container;
 
-		/** @var string $cacheDir */
-		$cacheDir = $container['doctrine.orm.entitiesCacheDir'];
+			/** @var string $cacheDir */
+			$cacheDir = $container['doctrine.orm.entitiesCacheDir'];
 
-		static $entityGenerator;
-		if (!$entityGenerator) {
-			$entityGenerator = new EntityGenerator();
-			$entityGenerator->setGenerateStubMethods(true);
-			$entityGenerator->setFieldVisibility('protected');
-			$entityGenerator->setRegenerateEntityIfExists($GLOBALS['TL_CONFIG']['debugMode'] || $GLOBALS['TL_CONFIG']['doctrineDevMode']);
-			$entityGenerator->setUpdateEntityIfExists($GLOBALS['TL_CONFIG']['debugMode'] || $GLOBALS['TL_CONFIG']['doctrineDevMode']);
+			static $entityGenerator;
+			if (!$entityGenerator) {
+				$entityGenerator = new EntityGenerator();
+				$entityGenerator->setGenerateStubMethods(true);
+				$entityGenerator->setFieldVisibility('protected');
+				$entityGenerator->setRegenerateEntityIfExists($GLOBALS['TL_CONFIG']['debugMode'] || $GLOBALS['TL_CONFIG']['doctrineDevMode']);
+				$entityGenerator->setUpdateEntityIfExists($GLOBALS['TL_CONFIG']['debugMode'] || $GLOBALS['TL_CONFIG']['doctrineDevMode']);
+			}
+			$entityGenerator->generate(array($metadata), $cacheDir);
 		}
-		$entityGenerator->generate(array($metadata), $cacheDir);
 	}
 
 	/**
