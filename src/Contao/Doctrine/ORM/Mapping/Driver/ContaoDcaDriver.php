@@ -15,6 +15,7 @@
 
 namespace Contao\Doctrine\ORM\Mapping\Driver;
 
+use Composer\Autoload\ClassLoader;
 use Doctrine\Common\Persistence\Mapping\ClassMetadata;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriver;
 use Doctrine\ORM\Mapping\Builder\ClassMetadataBuilder;
@@ -39,16 +40,27 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 	 */
 	public function loadMetadataForClass($className, ClassMetadata $metadata)
 	{
+		global $container;
+
 		$tableName = static::classToTableName($className);;
 		$this->loadDataContainer($tableName);
 
-		if (!array_key_exists('TL_DCA', $GLOBALS) || !array_key_exists($tableName, $GLOBALS['TL_DCA'])) {
-			return;
+		if (!array_key_exists('TL_DCA', $GLOBALS)) {
+			$GLOBALS['TL_DCA'] = array();
+		}
+		if (!array_key_exists($tableName, $GLOBALS['TL_DCA'])) {
+			$GLOBALS['TL_DCA'][$tableName] = array(
+				'fields' => array()
+			);
 		}
 
 		$entityConfig = array();
 		if (array_key_exists('entity', $GLOBALS['TL_DCA'][$tableName])) {
 			$entityConfig = $GLOBALS['TL_DCA'][$tableName]['entity'];
+		}
+
+		if (array_key_exists('isMappedSuperclass', $entityConfig)) {
+			$metadata->isMappedSuperclass = $entityConfig['isMappedSuperclass'];
 		}
 
 		// custom repository class
@@ -61,49 +73,18 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 			$metadata->setIdGeneratorType($entityConfig['idGenerator']);
 		}
 
-		$metadata->isMappedSuperclass = true;
 		$metadata->setInheritanceType(ClassMetadataInfo::INHERITANCE_TYPE_NONE);
 		$metadata->setPrimaryTable(
 			array('name' => $tableName)
 		);
 
-		// add primary key field ID
-		if (!array_key_exists('id', $GLOBALS['TL_DCA'][$tableName]['fields'])) {
-			$GLOBALS['TL_DCA'][$tableName]['fields']['id']['field'] = array();
-		}
-		$GLOBALS['TL_DCA'][$tableName]['fields']['id']['field'] = array_merge(
-			array(
-				'id' => true,
-				'type' => 'integer'
-			),
-			$GLOBALS['TL_DCA'][$tableName]['fields']['id']['field']
-		);
+		$fields = (array) $GLOBALS['TL_DCA'][$tableName]['fields'];
 
-		// add parent key field PID
-		if (!empty($GLOBALS['TL_DCA'][$tableName]['config']['ptable'])) {
-			if (!array_key_exists('pid', $GLOBALS['TL_DCA'][$tableName]['fields'])) {
-				$GLOBALS['TL_DCA'][$tableName]['fields']['pid']['field'] = array();
+		foreach ($fields as $fieldName => $fieldConfig) {
+			if (array_key_exists('field', $fieldConfig) && $fieldConfig['field'] === false) {
+				continue;
 			}
-			$GLOBALS['TL_DCA'][$tableName]['fields']['pid']['field'] = array_merge(
-				array(
-					'type' => 'integer'
-				),
-				$GLOBALS['TL_DCA'][$tableName]['fields']['pid']['field']
-			);
-		}
 
-		// add modification time field TSTAMP
-		if (!array_key_exists('tstamp', $GLOBALS['TL_DCA'][$tableName]['fields'])) {
-			$GLOBALS['TL_DCA'][$tableName]['fields']['tstamp']['field'] = array();
-		}
-		$GLOBALS['TL_DCA'][$tableName]['fields']['tstamp']['field'] = array_merge(
-			array(
-				'type' => 'integer'
-			),
-			$GLOBALS['TL_DCA'][$tableName]['fields']['tstamp']['field']
-		);
-
-		foreach ($GLOBALS['TL_DCA'][$tableName]['fields'] as $fieldName => $fieldConfig) {
 			$fieldMapping = array();
 
 			$inputTypes = array($fieldConfig['inputType']);
@@ -143,25 +124,18 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 				$fieldMapping = array_merge($fieldMapping, $fieldConfig['field']);
 			}
 
-			$fieldMapping['id'] = $fieldName == 'id';
 			$fieldMapping['fieldName'] = $fieldName;
 
 			$metadata->mapField($fieldMapping);
 		}
 
-		if (TL_MODE == 'BE') {
-			global $container;
-
+		if (TL_MODE == 'BE' && !$metadata->isMappedSuperclass) {
 			/** @var string $cacheDir */
 			$cacheDir = $container['doctrine.orm.entitiesCacheDir'];
 
 			static $entityGenerator;
 			if (!$entityGenerator) {
-				$entityGenerator = new EntityGenerator();
-				$entityGenerator->setGenerateStubMethods(true);
-				$entityGenerator->setFieldVisibility('protected');
-				$entityGenerator->setRegenerateEntityIfExists($GLOBALS['TL_CONFIG']['debugMode'] || $GLOBALS['TL_CONFIG']['doctrineDevMode']);
-				$entityGenerator->setUpdateEntityIfExists($GLOBALS['TL_CONFIG']['debugMode'] || $GLOBALS['TL_CONFIG']['doctrineDevMode']);
+				$entityGenerator = $container['doctrine.orm.entitiyGeneratorFactory']($GLOBALS['TL_CONFIG']['debugMode'] || $GLOBALS['TL_CONFIG']['doctrineDevMode']);
 			}
 			$entityGenerator->generate(array($metadata), $cacheDir);
 		}
@@ -207,10 +181,10 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 
 		$parts = explode('_', $tableName);
 
-		// remove tl_ prefix
+		// remove orm_ prefix
 		array_shift($parts);
 
-		$partialTableName = 'tl';
+		$partialTableName = 'orm';
 		$className = '';
 
 		foreach ($parts as $part) {
@@ -244,12 +218,13 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 			$className = $matches[2];
 		}
 		else {
-			$tableName = 'tl_';
+			$tableName = 'orm_';
 		}
 
-		$className = str_replace('\\', '', $className);
-		preg_match_all('~[A-Z][a-z0-9_]*~', $className, $matches);
+		$className = str_replace('\\', '_', $className);
+		preg_match_all('~[A-Z]+[a-z0-9_]*~', $className, $matches);
 		$tableName .= implode('_', array_map('strtolower', $matches[0]));
+		$tableName = preg_replace('~__+~', '_', $tableName);
 		return $tableName;
 	}
 }

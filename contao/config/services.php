@@ -15,6 +15,32 @@
 
 /** @var Pimple $container */
 
+$container['doctrine.orm.entitiyGeneratorParentClass'] = 'Contao\Doctrine\ORM\Entity';
+
+$container['doctrine.orm.entitiyGeneratorFactory'] = $container->protect(
+	function ($regenerate = false) {
+		$entityGenerator = new \Doctrine\ORM\Tools\EntityGenerator();
+		$entityGenerator->setGenerateStubMethods(true);
+		$entityGenerator->setFieldVisibility('protected');
+		$entityGenerator->setRegenerateEntityIfExists($regenerate);
+		$entityGenerator->setUpdateEntityIfExists($regenerate);
+		$entityGenerator->setClassToExtend($GLOBALS['container']['doctrine.orm.entitiyGeneratorParentClass']);
+
+		// type mapping hack -.-
+
+		$reflectionClass = new ReflectionClass($entityGenerator);
+		$typeAliasProperty = $reflectionClass->getProperty('typeAlias');
+		$typeAliasProperty->setAccessible(true);
+
+		$typeAlias = $typeAliasProperty->getValue($entityGenerator);
+		$typeAlias['timestamp'] = '\DateTime';
+		$typeAlias['contao-boolean'] = 'bool';
+		$typeAliasProperty->setValue($entityGenerator, $typeAlias);
+
+		return $entityGenerator;
+	}
+);
+
 $container['doctrine.cache.orm'] = function($container) {
 	return $container['doctrine.cache.default'];
 };
@@ -25,6 +51,11 @@ $container['doctrine.orm.entitiesCacheDir'] = $container->share(
 		if (!is_dir($entitiesCacheDir)) {
 			mkdir($entitiesCacheDir, 0777, true);
 		}
+
+		$classLoader = new \Composer\Autoload\ClassLoader();
+		$classLoader->add('', array($entitiesCacheDir), true);
+		$classLoader->register(true);
+
 		return $entitiesCacheDir;
 	}
 );
@@ -35,6 +66,11 @@ $container['doctrine.orm.proxiesCacheDir'] = $container->share(
 		if (!is_dir($proxiesCacheDir)) {
 			mkdir($proxiesCacheDir, 0777, true);
 		}
+
+		$classLoader = new \Composer\Autoload\ClassLoader();
+		$classLoader->add('', array($proxiesCacheDir), true);
+		$classLoader->register(true);
+
 		return $proxiesCacheDir;
 	}
 );
@@ -45,6 +81,11 @@ $container['doctrine.orm.repositoriesCacheDir'] = $container->share(
 		if (!is_dir($repositoriesCacheDir)) {
 			mkdir($repositoriesCacheDir, 0777, true);
 		}
+
+		$classLoader = new \Composer\Autoload\ClassLoader();
+		$classLoader->add('', array($repositoriesCacheDir), true);
+		$classLoader->register(true);
+
 		return $repositoriesCacheDir;
 	}
 );
@@ -66,8 +107,14 @@ $container['doctrine.orm.entityManager'] = $container->share(
 		);
 		$config->setMetadataDriverImpl(new \Contao\Doctrine\ORM\Mapping\Driver\ContaoDcaDriver($entitiesCacheDir));
 
-		if (array_key_exists('TL_HOOK', $GLOBALS) && array_key_exists('prepareDoctrineEntityManager', $GLOBALS['TL_HOOK']) && is_array($GLOBALS['prepareDoctrineEntityManager']['prepareDoctrineConnection'])) {
-			foreach ($GLOBALS['TL_HOOK']['prepareDoctrineEntityManager'] as $callback) {
+		if (array_key_exists('DOCTRINE_ENTITY_NAMESPACE_ALIAS', $GLOBALS) && is_array($GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS'])) {
+			foreach ($GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS'] as $alias => $namespace) {
+				$config->addEntityNamespace($alias, $namespace);
+			}
+		}
+
+		if (array_key_exists('TL_HOOKS', $GLOBALS) && array_key_exists('prepareDoctrineEntityManager', $GLOBALS['TL_HOOKS']) && is_array($GLOBALS['prepareDoctrineEntityManager']['prepareDoctrineConnection'])) {
+			foreach ($GLOBALS['TL_HOOKS']['prepareDoctrineEntityManager'] as $callback) {
 				$object = method_exists($callback[0], 'getInstance') ? call_user_func(array($callback[0], 'getInstance')) : new $callback[0];
 				$object->$callback[1]($config);
 			}

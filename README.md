@@ -10,17 +10,22 @@ Entity mapping
 
 To register an entity table, add to your **config.php**:
 ```php
-$GLOBALS['DOCTRINE_ENTITIES'][] = 'tl_my_entity_type';
+$GLOBALS['DOCTRINE_ENTITIES'][] = 'orm_my_entity_type';
 ```
-
 The table name will be converted to `MyEntityType`.
 
 Custom Namespaces can be mapped by a *table name prefix* to *class namespace* map:
 ```php
-$GLOBALS['DOCTRINE_ENTITY_NAMESPACE_MAP']['tl_my_entity'] = 'My\Entity';
+$GLOBALS['DOCTRINE_ENTITY_NAMESPACE_MAP']['orm_my_entity'] = 'My\Entity';
 ```
-
 Now the table name will be converted to `My\Entity\Type`.
+
+While `DOCTRINE_ENTITY_NAMESPACE_MAP` is used for table name transformation,
+the array `DOCTRINE_ENTITY_NAMESPACE_ALIAS` is used to define doctrine namespace aliases.
+```php
+$GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS']['My'] = 'My\Entity';
+```
+Now you can use `My:Type` instead of `My\Entity\Type` as entity name.
 
 Configure entities via DCA
 --------------------------
@@ -50,5 +55,5 @@ $GLOBALS['TL_DCA']['...'] = array(
 Contao hooks
 ------------
 
-`$GLOBALS['TL_HOOK']['prepareDoctrineEntityManager'] = function(\Doctrine\ORM\Configuration &$config) { ... }`
+`$GLOBALS['TL_HOOKS']['prepareDoctrineEntityManager'] = function(\Doctrine\ORM\Configuration &$config) { ... }`
 Called before the entity manager will be created.

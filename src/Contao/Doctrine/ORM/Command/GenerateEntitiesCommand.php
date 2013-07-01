@@ -62,12 +62,7 @@ class GenerateEntitiesCommand extends Command
 
         if (count($metadatas)) {
             // Create EntityGenerator
-            $entityGenerator = new EntityGenerator();
-
-			$entityGenerator->setGenerateStubMethods(true);
-			$entityGenerator->setFieldVisibility('protected');
-            $entityGenerator->setRegenerateEntityIfExists(true);
-            $entityGenerator->setUpdateEntityIfExists(true);
+            $entityGenerator = $container['doctrine.orm.entitiyGeneratorFactory'](true);
 
             foreach ($metadatas as $metadata) {
                 $output->write(
