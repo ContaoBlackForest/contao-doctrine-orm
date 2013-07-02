@@ -17,7 +17,7 @@ namespace Contao\Doctrine\ORM;
 
 use Doctrine\ORM\Proxy\Proxy;
 
-abstract class Entity implements \JsonSerializable
+abstract class Entity
 {
 	function __has($name)
 	{
@@ -90,26 +90,13 @@ abstract class Entity implements \JsonSerializable
 
 		$data = array();
 		foreach ($this as $key => $value) {
-			if ($value instanceof \JsonSerializable) {
-				$data[$key] = $value->jsonSerialize();
+			if ($value instanceof Entity) {
+				$data[$key] = $value->toArray();
 			}
 			else {
 				$data[$key] = $value;
 			}
 		}
 		return $data;
-	}
-
-	/**
-	 * (PHP 5 &gt;= 5.4.0)<br/>
-	 * Specify data which should be serialized to JSON
-	 *
-	 * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
-	 * @return mixed data which can be serialized by <b>json_encode</b>,
-	 *       which is a value of any type other than a resource.
-	 */
-	public function jsonSerialize()
-	{
-		return $this->toArray();
 	}
 }
