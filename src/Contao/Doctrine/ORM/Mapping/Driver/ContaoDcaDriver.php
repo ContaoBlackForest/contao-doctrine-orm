@@ -72,6 +72,9 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 		if (array_key_exists('idGenerator', $entityConfig)) {
 			$metadata->setIdGeneratorType($entityConfig['idGenerator']);
 		}
+		else {
+			$metadata->setIdGeneratorType(ClassMetadataInfo::GENERATOR_TYPE_AUTO);
+		}
 
 		$metadata->setInheritanceType(ClassMetadataInfo::INHERITANCE_TYPE_NONE);
 		$metadata->setPrimaryTable(
