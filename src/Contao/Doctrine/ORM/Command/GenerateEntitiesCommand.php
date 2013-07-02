@@ -15,6 +15,7 @@
 
 namespace Contao\Doctrine\ORM\Command;
 
+use Contao\Doctrine\ORM\Install\EntityGeneration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Tools\DisconnectedClassMetadataFactory;
 use Doctrine\ORM\Tools\EntityGenerator;
@@ -53,30 +54,6 @@ class GenerateEntitiesCommand extends Command
 			}
 		}
 
-		/** @var EntityManager $entityManager */
-		$entityManager = $container['doctrine.orm.entityManager'];
-
-        $classMetadataFactory = new DisconnectedClassMetadataFactory();
-        $classMetadataFactory->setEntityManager($entityManager);
-        $metadatas = $classMetadataFactory->getAllMetadata();
-
-        if (count($metadatas)) {
-            // Create EntityGenerator
-            $entityGenerator = $container['doctrine.orm.entitiyGeneratorFactory'](true);
-
-            foreach ($metadatas as $metadata) {
-                $output->write(
-                    sprintf('Processing entity "<info>%s</info>"', $metadata->name) . PHP_EOL
-                );
-            }
-
-            // Generating Entities
-            $entityGenerator->generate($metadatas, $cacheDir);
-
-            // Outputting information message
-            $output->write(PHP_EOL . sprintf('Entity classes generated to "<info>%s</INFO>"', $cacheDir) . PHP_EOL);
-        } else {
-            $output->write('No Metadata Classes to process.' . PHP_EOL);
-        }
+		EntityGeneration::generate($output);
 	}
 }

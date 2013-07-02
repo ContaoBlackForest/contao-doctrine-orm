@@ -16,6 +16,7 @@
 namespace Contao\Doctrine\ORM\Install;
 
 use Contao\Doctrine\ORM\EntityHelper;
+use Doctrine\Common\Cache\ApcCache;
 use Doctrine\ORM\Tools\SchemaTool;
 
 class DbTool
@@ -26,9 +27,22 @@ class DbTool
 		$GLOBALS['TL_CONFIG']['doctrineDevMode'] = true;
 
 		$entityManager = EntityHelper::getEntityManager();
-		$metadatas = $entityManager->getMetadataFactory()->getAllMetadata();
-		$tool = new SchemaTool($entityManager);
-		$sqls = $tool->getUpdateSchemaSql($metadatas);
+
+		$cacheDriver = $entityManager
+			->getConfiguration()
+			->getMetadataCacheImpl();
+		if ($cacheDriver && !$cacheDriver instanceof ApcCache) {
+			$cacheDriver->deleteAll();
+		}
+
+		// force "disconnected" generation of entities
+		EntityGeneration::generate();
+
+		$metadatas = $entityManager
+			->getMetadataFactory()
+			->getAllMetadata();
+		$tool      = new SchemaTool($entityManager);
+		$sqls      = $tool->getUpdateSchemaSql($metadatas);
 
 		foreach ($sqls as $sql) {
 			if (!preg_match('~^(CREATE|ALTER|DROP) TABLE orm_~', $sql)) {
