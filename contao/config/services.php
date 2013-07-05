@@ -15,27 +15,13 @@
 
 /** @var Pimple $container */
 
-$container['doctrine.orm.entitiyGeneratorParentClass'] = 'Contao\Doctrine\ORM\Entity';
-
 $container['doctrine.orm.entitiyGeneratorFactory'] = $container->protect(
 	function ($regenerate = false) {
-		$entityGenerator = new \Doctrine\ORM\Tools\EntityGenerator();
+		$entityGenerator = new \Contao\Doctrine\ORM\Install\EntityGenerator();
 		$entityGenerator->setGenerateStubMethods(true);
 		$entityGenerator->setFieldVisibility('protected');
 		$entityGenerator->setRegenerateEntityIfExists($regenerate);
 		$entityGenerator->setUpdateEntityIfExists($regenerate);
-		$entityGenerator->setClassToExtend($GLOBALS['container']['doctrine.orm.entitiyGeneratorParentClass']);
-
-		// type mapping hack -.-
-
-		$reflectionClass = new ReflectionClass($entityGenerator);
-		$typeAliasProperty = $reflectionClass->getProperty('typeAlias');
-		$typeAliasProperty->setAccessible(true);
-
-		$typeAlias = $typeAliasProperty->getValue($entityGenerator);
-		$typeAlias['timestamp'] = '\DateTime';
-		$typeAlias['contao-boolean'] = 'bool';
-		$typeAliasProperty->setValue($entityGenerator, $typeAlias);
 
 		return $entityGenerator;
 	}

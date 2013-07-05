@@ -16,6 +16,7 @@
 namespace Contao\Doctrine\ORM\Mapping\Driver;
 
 use Composer\Autoload\ClassLoader;
+use Contao\Doctrine\ORM\Install\EntityGeneration;
 use Doctrine\Common\Persistence\Mapping\ClassMetadata;
 use Doctrine\Common\Persistence\Mapping\Driver\MappingDriver;
 use Doctrine\ORM\Mapping\Builder\ClassMetadataBuilder;
@@ -45,10 +46,17 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 		$tableName = static::classToTableName($className);;
 		$this->loadDataContainer($tableName);
 
+		try {
+			$class = new \ReflectionClass($className);
+		}
+		catch (\Exception $e) {
+			$class = false;
+		}
+
 		if (!array_key_exists('TL_DCA', $GLOBALS)) {
 			$GLOBALS['TL_DCA'] = array();
 		}
-		if (!array_key_exists($tableName, $GLOBALS['TL_DCA'])) {
+		if (!array_key_exists($tableName, $GLOBALS['TL_DCA']) || !is_array($GLOBALS['TL_DCA'][$tableName])) {
 			$GLOBALS['TL_DCA'][$tableName] = array(
 				'fields' => array()
 			);
@@ -59,7 +67,10 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 			$entityConfig = $GLOBALS['TL_DCA'][$tableName]['entity'];
 		}
 
-		if (array_key_exists('isMappedSuperclass', $entityConfig)) {
+		if ($class && !$class->isInstantiable()) {
+			$metadata->isMappedSuperclass = true;
+		}
+		else if (array_key_exists('isMappedSuperclass', $entityConfig)) {
 			$metadata->isMappedSuperclass = $entityConfig['isMappedSuperclass'];
 		}
 
@@ -107,16 +118,14 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 					array_unshift($inputTypes, $inputTypeOption);
 				}
 			}
-			$fieldMapping['type'] = 'text';
 			foreach ($inputTypes as $inputType) {
 				if (array_key_exists($inputType, $GLOBALS['DOCTRINE_TYPE_MAP'])) {
-					$fieldMapping['type'] = $GLOBALS['DOCTRINE_TYPE_MAP'][$inputType];
+					$fieldMapping = $GLOBALS['DOCTRINE_TYPE_MAP'][$inputType];
 					break;
 				}
 			}
 
-
-			if ($fieldConfig['eval']['maxlength']) {
+			if (isset($fieldConfig['eval']['maxlength'])) {
 				$fieldMapping['length'] = (int) $fieldConfig['eval']['maxlength'];
 			}
 			if (isset($fieldConfig['eval']['unique'])) {
@@ -132,16 +141,11 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 			$metadata->mapField($fieldMapping);
 		}
 
+		/*
 		if (TL_MODE == 'BE' && !$metadata->isMappedSuperclass) {
-			/** @var string $cacheDir */
-			$cacheDir = $container['doctrine.orm.entitiesCacheDir'];
-
-			static $entityGenerator;
-			if (!$entityGenerator) {
-				$entityGenerator = $container['doctrine.orm.entitiyGeneratorFactory']($GLOBALS['TL_CONFIG']['debugMode'] || $GLOBALS['TL_CONFIG']['doctrineDevMode']);
-			}
-			$entityGenerator->generate(array($metadata), $cacheDir);
+			EntityGeneration::generateEntity($metadata);
 		}
+		*/
 	}
 
 	/**

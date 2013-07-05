@@ -17,8 +17,28 @@ namespace Contao\Doctrine\ORM;
 
 use Doctrine\ORM\Proxy\Proxy;
 
-abstract class Entity
+abstract class Entity implements \ArrayAccess
 {
+	public function offsetExists($offset)
+	{
+		return $this->__has($offset);
+	}
+
+	public function offsetGet($offset)
+	{
+		return $this->__get($offset);
+	}
+
+	public function offsetSet($offset, $value)
+	{
+		return $this->__set($offset, $value);
+	}
+
+	public function offsetUnset($offset)
+	{
+		return $this->__unset($offset);
+	}
+
 	function __has($name)
 	{
 		static $reflection;
@@ -36,7 +56,8 @@ abstract class Entity
 	function __get($name)
 	{
 		if ($this->__has($name)) {
-			return $this->$name;
+			$getter = 'get' . ucfirst($name);
+			return $this->$getter();
 		}
 		else {
 			throw new \InvalidArgumentException('The entity ' . get_class($this) . ' does not have a property ' . $name);
@@ -46,7 +67,8 @@ abstract class Entity
 	public function __set($name, $value)
 	{
 		if ($this->__has($name)) {
-			$this->$name = $value;
+			$setter = 'set' . ucfirst($name);
+			$this->$setter($value);
 		}
 		else {
 			throw new \InvalidArgumentException('The entity ' . get_class($this) . ' does not have a property ' . $name);
@@ -99,4 +121,54 @@ abstract class Entity
 		}
 		return $data;
 	}
+
+    /**
+     * Call load callbacks
+     *
+     * @param string $field
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    protected function callLoadCallbacks($field, $value)
+    {
+        if (isset($GLOBALS['TL_DCA'][static::TABLE_NAME]['fields'][$field]['load_callback'])) {
+            $callbacks = (array) $GLOBALS['TL_DCA'][static::TABLE_NAME]['fields'][$field]['load_callback'];
+            foreach ($callbacks as $callback) {
+                if (is_callable($callback)) {
+                    $value = call_user_func($callback, $value, $this);
+                }
+                else {
+                    $object = (in_array('getInstance', get_class_methods($callback[0]))) ? call_user_func($callback[0], 'getInstance') : new $callback[0];
+                    $value = $object->$callback[1]($value, $this);
+                }
+            }
+        }
+        return $value;
+    }
+
+    /**
+     * Call save callbacks
+     *
+     * @param string $field
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    protected function callSaveCallbacks($field, $value)
+    {
+        if (isset($GLOBALS['TL_DCA'][static::TABLE_NAME]['fields'][$field]['save_callback'])) {
+            $callbacks = (array) $GLOBALS['TL_DCA'][static::TABLE_NAME]['fields'][$field]['save_callback'];
+            foreach ($callbacks as $callback) {
+                if (is_callable($callback)) {
+                    $value = call_user_func($callback, $value, $this);
+                }
+                else {
+                    $object = (in_array('getInstance', get_class_methods($callback[0]))) ? call_user_func($callback[0], 'getInstance') : new $callback[0];
+                    $value = $object->$callback[1]($value, $this);
+                }
+            }
+        }
+        return $value;
+    }
 }
