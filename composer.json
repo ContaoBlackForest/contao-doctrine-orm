@@ -21,9 +21,9 @@
 	"require":{
 		"php":">=5.3",
 		"contao/core": "2.11.*",
-		"bit3/contao-doctrine-dbal": "~2.3",
+		"bit3/contao-doctrine-dbal": "~2.4",
 		"bit3/contao-dependency-container": "~1",
-		"doctrine/orm": "~2.3"
+		"doctrine/orm": "~2.4"
 	},
 	"require-dev":{
 		"phpunit/phpunit":"3.7.*",
@@ -42,7 +42,7 @@
 			}
 		},
 		"branch-alias": {
-			"dev-master": "2.3.x-dev"
+			"dev-master": "2.4.x-dev"
 		}
 	}
 }
