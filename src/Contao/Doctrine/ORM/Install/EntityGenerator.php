@@ -22,11 +22,16 @@ class EntityGenerator extends \Doctrine\ORM\Tools\EntityGenerator
 	/**
 	 * @var string
 	 */
-	static protected $tableNameTemplate =
+	static protected $constantsTemplate =
 '/**
  * The table name this entity is stored in
  */
 const TABLE_NAME = \'<tableName>\';
+
+/**
+ * The primary key fields of this entity
+ */
+const KEY = \'<key>\';
 ';
 
 	/**
@@ -57,7 +62,7 @@ use Doctrine\ORM\Mapping as ORM;
 <entityAnnotation>
 <entityClassName>
 {
-<tableName>
+<constants>
 <entityBody>
 }';
 
@@ -69,7 +74,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 public function <methodName>()
 {
-<spaces>return $this->callLoadCallbacks(\'<variableName>\', $this-><fieldName>);
+<spaces>return $this->callGetterCallbacks(\'<variableName>\', $this-><fieldName>);
 }';
 
 		self::$setMethodTemplate =
@@ -81,7 +86,7 @@ public function <methodName>()
  */
 public function <methodName>(<methodTypeHint>$<variableName><variableDefault>)
 {
-<spaces>$this-><fieldName> = $this->callSaveCallbacks(\'<variableName>\', $<variableName>);
+<spaces>$this-><fieldName> = $this->callSetterCallbacks(\'<variableName>\', $<variableName>);
 
 <spaces>return $this;
 }';
@@ -102,10 +107,10 @@ public function <methodName>(<methodTypeHint>$<variableName><variableDefault>)
 
 		$code = str_replace(
 			array(
-				 '<tableName>',
+				 '<constants>',
 			),
 			array(
-				 $prefixCodeWithSpacesMethod->invoke($this, $this->generateTableNameConstant($metadata)),
+				 $prefixCodeWithSpacesMethod->invoke($this, $this->generateConstant($metadata)),
 			),
 			$code
 		);
@@ -113,16 +118,18 @@ public function <methodName>(<methodTypeHint>$<variableName><variableDefault>)
 		return str_replace('<spaces>', $spacesProperty->getValue($this), $code);
 	}
 
-	protected function generateTableNameConstant(ClassMetadataInfo $metadata)
+	protected function generateConstant(ClassMetadataInfo $metadata)
 	{
 		return str_replace(
 			array(
 				 '<tableName>',
+				 '<key>',
 			),
 			array(
 				 $metadata->getTableName(),
+				 implode(',', $metadata->getIdentifierFieldNames())
 			),
-			static::$tableNameTemplate
+			static::$constantsTemplate
 		);
 	}
 

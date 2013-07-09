@@ -30,6 +30,23 @@ class EntityGeneration
 	{
 		global $container;
 
+		/** @var string $cacheDir */
+		$cacheDir = $container['doctrine.orm.entitiesCacheDir'];
+
+		$iterator = new \RecursiveIteratorIterator(
+			new \RecursiveDirectoryIterator($cacheDir, \FilesystemIterator::SKIP_DOTS),
+			\RecursiveIteratorIterator::CHILD_FIRST
+		);
+		/** @var \SplFileInfo $file */
+		foreach ($iterator as $file) {
+			if ($file->isDir()) {
+				rmdir($file);
+			}
+			else {
+				unlink($file);
+			}
+		}
+
 		/** @var EntityManager $entityManager */
 		$entityManager = $container['doctrine.orm.entityManager'];
 
@@ -39,9 +56,6 @@ class EntityGeneration
 
 		if (count($metadatas)) {
 			$generated = array();
-
-			/** @var string $cacheDir */
-			$cacheDir = $container['doctrine.orm.entitiesCacheDir'];
 
 			// Create EntityGenerator
 			/** @var EntityGenerator $entityGenerator */

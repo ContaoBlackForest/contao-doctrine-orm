@@ -76,6 +76,24 @@ $container['doctrine.orm.repositoriesCacheDir'] = $container->share(
 	}
 );
 
+$container['doctrine.orm.eventManager'] = $container->share(
+	function ($container) {
+		$eventManager = new \Doctrine\Common\EventManager();
+
+		if (array_key_exists('TL_HOOKS', $GLOBALS) &&
+			array_key_exists('prepareDoctrineEventManager', $GLOBALS['TL_HOOKS']) &&
+			is_array($GLOBALS['TL_HOOKS']['prepareDoctrineEventManager'])
+		) {
+			foreach ($GLOBALS['TL_HOOKS']['prepareDoctrineEventManager'] as $callback) {
+				$object = method_exists($callback[0], 'getInstance') ? call_user_func(array($callback[0], 'getInstance')) : new $callback[0];
+				$object->$callback[1]($eventManager);
+			}
+		}
+
+		return $eventManager;
+	}
+);
+
 $container['doctrine.orm.entityManager'] = $container->share(
 	function ($container) {
 		$isDevMode = $GLOBALS['TL_CONFIG']['debugMode'] || $GLOBALS['TL_CONFIG']['doctrineDevMode'];
@@ -93,19 +111,30 @@ $container['doctrine.orm.entityManager'] = $container->share(
 		);
 		$config->setMetadataDriverImpl(new \Contao\Doctrine\ORM\Mapping\Driver\ContaoDcaDriver($entitiesCacheDir));
 
-		if (array_key_exists('DOCTRINE_ENTITY_NAMESPACE_ALIAS', $GLOBALS) && is_array($GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS'])) {
+		if (array_key_exists('DOCTRINE_ENTITY_NAMESPACE_ALIAS', $GLOBALS) &&
+			is_array($GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS'])
+		) {
 			foreach ($GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS'] as $alias => $namespace) {
 				$config->addEntityNamespace($alias, $namespace);
 			}
 		}
 
-		if (array_key_exists('TL_HOOKS', $GLOBALS) && array_key_exists('prepareDoctrineEntityManager', $GLOBALS['TL_HOOKS']) && is_array($GLOBALS['prepareDoctrineEntityManager']['prepareDoctrineConnection'])) {
+		if (array_key_exists('TL_HOOKS', $GLOBALS) &&
+			array_key_exists('prepareDoctrineEntityManager', $GLOBALS['TL_HOOKS']) &&
+			is_array($GLOBALS['TL_HOOKS']['prepareDoctrineEntityManager'])
+		) {
 			foreach ($GLOBALS['TL_HOOKS']['prepareDoctrineEntityManager'] as $callback) {
 				$object = method_exists($callback[0], 'getInstance') ? call_user_func(array($callback[0], 'getInstance')) : new $callback[0];
 				$object->$callback[1]($config);
 			}
 		}
 
-		return \Doctrine\ORM\EntityManager::create($container['doctrine.connection.default'], $config);
+		/** @var \Doctrine\DBAL\Connection $connection */
+		$connection = $container['doctrine.connection.default'];
+
+		/** @var \Doctrine\Common\EventManager $eventManager */
+		$eventManager = $container['doctrine.orm.eventManager'];
+
+		return \Doctrine\ORM\EntityManager::create($connection, $config, $eventManager);
 	}
 );

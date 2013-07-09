@@ -14,9 +14,9 @@
 	],
 	"support":{
 		"email":"info@bit3.de",
-		"issues":"https://github.com/bit3/contao-doctrine/issues",
+		"issues":"https://github.com/bit3/contao-doctrine-orm/issues",
 		"irc":"irc://irc.freenode.org/contao.dev",
-		"source":"https://github.com/bit3/contao-doctrine"
+		"source":"https://github.com/bit3/contao-doctrine-orm"
 	},
 	"require":{
 		"php":">=5.3",

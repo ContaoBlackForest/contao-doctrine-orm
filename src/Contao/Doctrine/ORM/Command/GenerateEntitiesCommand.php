@@ -35,25 +35,6 @@ class GenerateEntitiesCommand extends Command
 
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
-		global $container;
-
-		/** @var string $cacheDir */
-		$cacheDir = $container['doctrine.orm.entitiesCacheDir'];
-
-		$iterator = new \RecursiveIteratorIterator(
-			new \RecursiveDirectoryIterator($cacheDir, \FilesystemIterator::SKIP_DOTS),
-			\RecursiveIteratorIterator::CHILD_FIRST
-		);
-		/** @var \SplFileInfo $file */
-		foreach ($iterator as $file) {
-			if ($file->isDir()) {
-				rmdir($file);
-			}
-			else {
-				unlink($file);
-			}
-		}
-
 		EntityGeneration::generate($output);
 	}
 }

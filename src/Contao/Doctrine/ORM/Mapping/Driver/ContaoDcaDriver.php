@@ -43,7 +43,7 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 	{
 		global $container;
 
-		$tableName = static::classToTableName($className);;
+		$tableName = static::classToTableName($className);
 		$this->loadDataContainer($tableName);
 
 		try {

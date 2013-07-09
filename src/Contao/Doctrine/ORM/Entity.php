@@ -19,26 +19,79 @@ use Doctrine\ORM\Proxy\Proxy;
 
 abstract class Entity implements \ArrayAccess
 {
+	const KEY_SEPARATOR = '-';
+
+	/**
+	 * Get or set the ID of this entity.
+	 *
+	 * @param mixed $_
+	 *
+	 * @return string
+	 */
+	public function id()
+	{
+		$args = func_get_args();
+
+		$fields = explode(',', static::KEY);
+		if (count($args)) {
+			if (count($args) == 1 && is_string($args[0])) {
+				$args = explode(static::KEY_SEPARATOR, $args[0]);
+			}
+			if (count($args) == count($fields)) {
+				foreach ($fields as $index => $field) {
+					$this->__set($field, $args[$index]);
+				}
+			}
+			else {
+				throw new \InvalidArgumentException(
+					'Arguments count of ' . count($args) . ' does not match id field count of ' . count($fields)
+				);
+			}
+		}
+		else {
+			$id = array();
+			foreach ($fields as $field) {
+				$id[] = $this->__get($field);
+			}
+		}
+		return implode(static::KEY_SEPARATOR, $id);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
 	public function offsetExists($offset)
 	{
 		return $this->__has($offset);
 	}
 
+	/**
+	 * {@inheritdoc}
+	 */
 	public function offsetGet($offset)
 	{
 		return $this->__get($offset);
 	}
 
+	/**
+	 * {@inheritdoc}
+	 */
 	public function offsetSet($offset, $value)
 	{
 		return $this->__set($offset, $value);
 	}
 
+	/**
+	 * {@inheritdoc}
+	 */
 	public function offsetUnset($offset)
 	{
 		return $this->__unset($offset);
 	}
 
+	/**
+	 * {@inheritdoc}
+	 */
 	function __has($name)
 	{
 		static $reflection;
@@ -48,11 +101,17 @@ abstract class Entity implements \ArrayAccess
 		return $reflection->hasProperty($name);
 	}
 
+	/**
+	 * {@inheritdoc}
+	 */
 	function __isset($name)
 	{
 		return $this->__has($name) && $this->$name !== null;
 	}
 
+	/**
+	 * {@inheritdoc}
+	 */
 	function __get($name)
 	{
 		if ($this->__has($name)) {
@@ -64,6 +123,9 @@ abstract class Entity implements \ArrayAccess
 		}
 	}
 
+	/**
+	 * {@inheritdoc}
+	 */
 	public function __set($name, $value)
 	{
 		if ($this->__has($name)) {
@@ -75,14 +137,12 @@ abstract class Entity implements \ArrayAccess
 		}
 	}
 
+	/**
+	 * {@inheritdoc}
+	 */
 	function __unset($name)
 	{
-		if ($this->__has($name)) {
-			$this->$name = null;
-		}
-		else {
-			throw new \InvalidArgumentException('The entity ' . get_class($this) . ' does not have a property ' . $name);
-		}
+		$this->__set($name, null);
 	}
 
 	/**
@@ -130,18 +190,12 @@ abstract class Entity implements \ArrayAccess
      *
      * @return mixed
      */
-    protected function callLoadCallbacks($field, $value)
+    protected function callGetterCallbacks($field, $value)
     {
-        if (isset($GLOBALS['TL_DCA'][static::TABLE_NAME]['fields'][$field]['load_callback'])) {
-            $callbacks = (array) $GLOBALS['TL_DCA'][static::TABLE_NAME]['fields'][$field]['load_callback'];
+        if (isset($GLOBALS['TL_DCA'][static::TABLE_NAME]['fields'][$field]['getter_callback'])) {
+            $callbacks = (array) $GLOBALS['TL_DCA'][static::TABLE_NAME]['fields'][$field]['getter_callback'];
             foreach ($callbacks as $callback) {
-                if (is_callable($callback)) {
-                    $value = call_user_func($callback, $value, $this);
-                }
-                else {
-                    $object = (in_array('getInstance', get_class_methods($callback[0]))) ? call_user_func($callback[0], 'getInstance') : new $callback[0];
-                    $value = $object->$callback[1]($value, $this);
-                }
+				$value = call_user_func($callback, $value, $this);
             }
         }
         return $value;
@@ -155,18 +209,12 @@ abstract class Entity implements \ArrayAccess
      *
      * @return mixed
      */
-    protected function callSaveCallbacks($field, $value)
+    protected function callSetterCallbacks($field, $value)
     {
-        if (isset($GLOBALS['TL_DCA'][static::TABLE_NAME]['fields'][$field]['save_callback'])) {
-            $callbacks = (array) $GLOBALS['TL_DCA'][static::TABLE_NAME]['fields'][$field]['save_callback'];
+        if (isset($GLOBALS['TL_DCA'][static::TABLE_NAME]['fields'][$field]['setter_callback'])) {
+            $callbacks = (array) $GLOBALS['TL_DCA'][static::TABLE_NAME]['fields'][$field]['setter_callback'];
             foreach ($callbacks as $callback) {
-                if (is_callable($callback)) {
-                    $value = call_user_func($callback, $value, $this);
-                }
-                else {
-                    $object = (in_array('getInstance', get_class_methods($callback[0]))) ? call_user_func($callback[0], 'getInstance') : new $callback[0];
-                    $value = $object->$callback[1]($value, $this);
-                }
+				$value = call_user_func($callback, $value, $this);
             }
         }
         return $value;
