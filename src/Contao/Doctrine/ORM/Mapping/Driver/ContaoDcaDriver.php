@@ -203,6 +203,8 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 			}
 		}
 
+		$className = rtrim($className, '\\');
+
 		return $className;
 	}
 
@@ -217,7 +219,7 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 		if (!$preg) {
 			$classes = array_keys($namespaceMap);
 			$classes = array_map('preg_quote', $classes);
-			$preg = '~^(' . implode('|', $classes) . ')\\\\(.*)$~s';
+			$preg = '~^(' . implode('|', $classes) . ')(\\\\(.*))?$~s';
 		}
 
 		if (preg_match($preg, $className, $matches)) {
@@ -232,6 +234,8 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 		preg_match_all('~[A-Z]+[a-z0-9_]*~', $className, $matches);
 		$tableName .= implode('_', array_map('strtolower', $matches[0]));
 		$tableName = preg_replace('~__+~', '_', $tableName);
+		$tableName = rtrim($tableName, '_');
+
 		return $tableName;
 	}
 }

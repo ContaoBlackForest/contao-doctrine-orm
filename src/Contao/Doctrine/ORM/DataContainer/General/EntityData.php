@@ -18,6 +18,7 @@ namespace Contao\Doctrine\ORM\DataContainer\General;
 use Contao\Doctrine\ORM\Entity;
 use Contao\Doctrine\ORM\EntityHelper;
 use Contao\Doctrine\ORM\Mapping\Driver\ContaoDcaDriver;
+use Contao\Doctrine\ORM\VersionManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query;
@@ -203,8 +204,16 @@ class EntityData implements \InterfaceGeneralData
 	public function delete($item)
 	{
 		$entityManager = $this->getEntityManager();
-		$entityManager->remove($item->getEntity());
-		$entityManager->flush($item->getEntity());
+
+		if ($item instanceof EntityModel) {
+			$entity = $item->getEntity();
+		}
+		else {
+			$entity = $this->getEntityRepository()->find($item);
+		}
+
+		$entityManager->remove($entity);
+		$entityManager->flush($entity);
 	}
 
 	/**
@@ -217,7 +226,7 @@ class EntityData implements \InterfaceGeneralData
 	 */
 	public function saveVersion(InterfaceGeneralModel $objModel, $strUsername)
 	{
-		// TODO: Implement saveVersion() method.
+		// do nothing, the version manager do this in the flush event state by itself
 	}
 
 	/**
@@ -265,7 +274,16 @@ class EntityData implements \InterfaceGeneralData
 	 */
 	public function getActiveVersion($mixID)
 	{
-		// TODO: Implement getActiveVersion() method.
+		$entityRepository = $this->getEntityRepository();
+		$entity = $entityRepository->find($mixID);
+		$version = VersionManager::findVersion($entity);
+
+		if ($version) {
+			return $version->id();
+		}
+		else {
+			return null;
+		}
 	}
 
 	/**

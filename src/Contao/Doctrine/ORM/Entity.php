@@ -15,11 +15,17 @@
 
 namespace Contao\Doctrine\ORM;
 
+use Contao\Doctrine\ORM\Event\DuplicateEntity;
 use Doctrine\ORM\Proxy\Proxy;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 abstract class Entity implements \ArrayAccess
 {
-	const KEY_SEPARATOR = '-';
+	const TABLE_NAME = null;
+
+	const KEY = null;
+
+	const KEY_SEPARATOR = ';';
 
 	/**
 	 * Get or set the ID of this entity.
@@ -219,4 +225,51 @@ abstract class Entity implements \ArrayAccess
         }
         return $value;
     }
+
+	/**
+	 * Duplicate (clone) an entity with or without it keys.
+	 *
+	 * @param bool $withoutKeys
+	 *
+	 * @return static
+	 */
+	function duplicate($withoutKeys = false)
+	{
+		if ($this instanceof Proxy) {
+			$this->__load();
+		}
+
+		$keys = explode(',', static::KEY);
+
+		$data = array();
+		foreach ($this as $key => $value) {
+			if (!$withoutKeys || !in_array($key, $keys)) {
+				if ($value instanceof Entity) {
+					$data[$key] = $value->toArray();
+				}
+				else {
+					$data[$key] = $value;
+				}
+			}
+		}
+
+		$entity = new static();
+		$entity->fromArray($data);
+
+		/** @var EventDispatcher $eventDispatcher */
+		$eventDispatcher = $GLOBALS['container']['event-dispatcher'];
+		$eventDispatcher->dispatch(DuplicateEntity::EVENT_NAME, new DuplicateEntity($entity, $withoutKeys));
+
+		return $entity;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	function __clone()
+	{
+		/** @var EventDispatcher $eventDispatcher */
+		$eventDispatcher = $GLOBALS['container']['event-dispatcher'];
+		$eventDispatcher->dispatch(DuplicateEntity::EVENT_NAME, new DuplicateEntity($this, false));
+	}
 }

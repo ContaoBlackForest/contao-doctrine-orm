@@ -121,6 +121,33 @@ class Helper
 		}
 
 		return $alias;
+	}
 
+	static public function createShortenEntityName($entity)
+	{
+		static $namespaceMap;
+		if (!$namespaceMap) {
+			if (array_key_exists('DOCTRINE_ENTITY_NAMESPACE_ALIAS', $GLOBALS)) {
+				$namespaceMap = array_flip($GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS']);
+			}
+			else {
+				$namespaceMap = array();
+			}
+		}
+
+		static $preg;
+		if (!$preg) {
+			$classes = array_keys($namespaceMap);
+			$classes = array_map('preg_quote', $classes);
+			$preg    = '~^(' . implode('|', $classes) . ')\\\\(.*)$~s';
+		}
+
+		$className = is_object($entity) ? get_class($entity) : (string) $entity;
+
+		if (preg_match($preg, $className, $matches)) {
+			$className = $namespaceMap[$matches[1]] . ':' . $matches[2];
+		}
+
+		return $className;
 	}
 }

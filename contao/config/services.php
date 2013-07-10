@@ -76,24 +76,6 @@ $container['doctrine.orm.repositoriesCacheDir'] = $container->share(
 	}
 );
 
-$container['doctrine.orm.eventManager'] = $container->share(
-	function ($container) {
-		$eventManager = new \Doctrine\Common\EventManager();
-
-		if (array_key_exists('TL_HOOKS', $GLOBALS) &&
-			array_key_exists('prepareDoctrineEventManager', $GLOBALS['TL_HOOKS']) &&
-			is_array($GLOBALS['TL_HOOKS']['prepareDoctrineEventManager'])
-		) {
-			foreach ($GLOBALS['TL_HOOKS']['prepareDoctrineEventManager'] as $callback) {
-				$object = method_exists($callback[0], 'getInstance') ? call_user_func(array($callback[0], 'getInstance')) : new $callback[0];
-				$object->$callback[1]($eventManager);
-			}
-		}
-
-		return $eventManager;
-	}
-);
-
 $container['doctrine.orm.entityManager'] = $container->share(
 	function ($container) {
 		$isDevMode = $GLOBALS['TL_CONFIG']['debugMode'] || $GLOBALS['TL_CONFIG']['doctrineDevMode'];
@@ -133,7 +115,10 @@ $container['doctrine.orm.entityManager'] = $container->share(
 		$connection = $container['doctrine.connection.default'];
 
 		/** @var \Doctrine\Common\EventManager $eventManager */
-		$eventManager = $container['doctrine.orm.eventManager'];
+		$eventManager = $container['doctrine.eventManager'];
+
+		// very late bind version manager
+		$eventManager->addEventSubscriber(new \Contao\Doctrine\ORM\VersionManager());
 
 		return \Doctrine\ORM\EntityManager::create($connection, $config, $eventManager);
 	}

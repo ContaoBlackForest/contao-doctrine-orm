@@ -20,6 +20,9 @@ use InterfaceGeneralModel;
 
 class EntityModel extends \AbstractGeneralModel
 {
+	/**
+	 * @var Entity
+	 */
 	protected $entity;
 
 	function __construct($entity)
@@ -32,8 +35,7 @@ class EntityModel extends \AbstractGeneralModel
 	 */
 	public function __clone()
 	{
-		$class = new \ReflectionClass($this->entity);
-		$this->entity = $class->newInstance();
+		$this->entity = $this->entity->duplicate(true);
 	}
 
 	/**
