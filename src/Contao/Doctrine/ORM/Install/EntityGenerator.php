@@ -15,6 +15,8 @@
 
 namespace Contao\Doctrine\ORM\Install;
 
+use Doctrine\Common\Util\Inflector;
+use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 
 class EntityGenerator extends \Doctrine\ORM\Tools\EntityGenerator
@@ -93,6 +95,9 @@ public function <methodName>(<methodTypeHint>$<variableName><variableDefault>)
 
 	}
 
+    /**
+     * {@inheritdoc}
+     */
 	public function generateEntityClass(ClassMetadataInfo $metadata)
 	{
 		$code = parent::generateEntityClass($metadata);
@@ -133,6 +138,9 @@ public function <methodName>(<methodTypeHint>$<variableName><variableDefault>)
 		);
 	}
 
+    /**
+     * {@inheritdoc}
+     */
 	protected function generateEntityFieldMappingProperties(ClassMetadataInfo $metadata)
 	{
 		$lines = array();
@@ -164,4 +172,55 @@ public function <methodName>(<methodTypeHint>$<variableName><variableDefault>)
 
 		return implode("\n", $lines);
 	}
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function generateEntityStubMethod(ClassMetadataInfo $metadata, $type, $fieldName, $typeHint = null,  $defaultValue = null)
+    {
+        $methodName = $type . Inflector::classify($fieldName);
+        if (in_array($type, array("add", "remove"))) {
+            $methodName = Inflector::singularize($methodName);
+        }
+
+        if ($this->hasMethod($methodName, $metadata)) {
+            return '';
+        }
+        $this->staticReflection[$metadata->name]['methods'][] = $methodName;
+
+        $var = sprintf('%sMethodTemplate', $type);
+        $template = self::$$var;
+
+        $methodTypeHint = null;
+        $types          = Type::getTypesMap();
+        $variableType   = $typeHint ? $this->getType($typeHint) . ' ' : null;
+
+        if ($typeHint && ! isset($types[$typeHint])) {
+            $variableType   =  '\\' . ltrim($variableType, '\\');
+            $methodTypeHint =  '\\' . $typeHint . ' ';
+        }
+		else if ($variableType[0] == '\\') {
+            $variableType   =  '\\' . ltrim($variableType, '\\');
+            $methodTypeHint =  '\\' . ltrim($variableType, '\\');
+		}
+
+        $replacements = array(
+          '<description>'       => ucfirst($type) . ' ' . $fieldName,
+          '<methodTypeHint>'    => $methodTypeHint,
+          '<variableType>'      => $variableType,
+          '<variableName>'      => Inflector::camelize($fieldName),
+          '<methodName>'        => $methodName,
+          '<fieldName>'         => $fieldName,
+          '<variableDefault>'   => ($defaultValue !== null ) ? (' = '.$defaultValue) : '',
+          '<entity>'            => $this->getClassName($metadata)
+        );
+
+        $method = str_replace(
+            array_keys($replacements),
+            array_values($replacements),
+            $template
+        );
+
+        return $this->prefixCodeWithSpaces($method);
+    }
 }

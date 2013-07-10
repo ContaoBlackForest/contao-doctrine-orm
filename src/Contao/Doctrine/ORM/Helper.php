@@ -28,7 +28,7 @@ class Helper
 	 * @param QueryBuilder     $queryBuilder
 	 * @param mixed            $id
 	 * @param Entity           $entity
-	 * @param bool             $singleton
+	 * @param bool             $standalone
 	 * @param \ReflectionClass $entityClass
 	 *
 	 * @throws \RuntimeException
@@ -36,35 +36,43 @@ class Helper
 	static public function extendQueryWhereId(
 		QueryBuilder $queryBuilder,
 		Entity $entity,
-		$singleton = false,
+		$standalone = false,
 		\ReflectionClass $entityClass = null
 	) {
 		if (!$entityClass) {
 			$entityClass = new \ReflectionClass($entity);
 		}
 
-		$keys     = explode(',', $entityClass->getConstant('KEY'));
+		$keys = explode(',', $entityClass->getConstant('KEY'));
 
 		foreach ($keys as $index => $key) {
-			$where = $queryBuilder
-				->expr()
-				->neq('e.' . $key, ':key' . $index);
+			$value = $entity->__get($key);
 
-			if ($index > 0 || !$singleton) {
+			if ($value !== null) {
+				$where = $queryBuilder
+					->expr()
+					->neq('e.' . $key, ':key' . $index);
+				$queryBuilder->setParameter(':key' . $index, $value);
+			}
+			else {
+				$where = $queryBuilder
+					->expr()
+					->isNotNull('e.' . $key);
+			}
+
+			if ($index > 0 || !$standalone) {
 				$queryBuilder->andWhere($where);
 			}
 			else {
 				$queryBuilder->where($where);
 			}
-
-			$queryBuilder->setParameter(':key' . $index, $entity->__get($key));
 		}
 	}
 
 	/**
 	 * Auto-Generate an alias for an entity.
 	 *
-	 * @param string      $alias
+	 * @param string $alias
 	 * @param Entity $entity
 	 *
 	 * @return string
@@ -72,12 +80,8 @@ class Helper
 	 */
 	static public function generateAlias($alias, Entity $entity)
 	{
-		$autoAlias = false;
-
 		// Generate alias if there is none
 		if (!strlen($alias)) {
-			$autoAlias = true;
-
 			if ($entity->__has('title')) {
 				$alias = standardize($entity->getTitle());
 			}
@@ -111,13 +115,8 @@ class Helper
 		$duplicateCount = $query->getResult(Query::HYDRATE_SINGLE_SCALAR);
 
 		// Check whether the news alias exists
-		if ($duplicateCount && !$autoAlias) {
-			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasExists'], $alias));
-		}
-
-		// Add ID to alias
-		if ($duplicateCount && $autoAlias) {
-			$alias .= '-' . $entity->id();
+		if ($duplicateCount) {
+			throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasExists'], $alias));
 		}
 
 		return $alias;

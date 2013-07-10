@@ -118,8 +118,37 @@ $container['doctrine.orm.entityManager'] = $container->share(
 		$eventManager = $container['doctrine.eventManager'];
 
 		// very late bind version manager
-		$eventManager->addEventSubscriber(new \Contao\Doctrine\ORM\VersionManager());
+		$eventManager->addEventSubscriber(new \Contao\Doctrine\ORM\VersioningListener());
 
 		return \Doctrine\ORM\EntityManager::create($connection, $config, $eventManager);
+	}
+);
+
+$container['doctrine.orm.entitySerializer.normalizers'] = new ArrayObject(
+	array(
+		 new \Contao\Doctrine\ORM\Serializer\EntityNormalizer(),
+		 new \Contao\Doctrine\ORM\Serializer\DateTimeNormalizer(),
+		 new \Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer(),
+	)
+);
+
+$container['doctrine.orm.entitySerializer.encoders'] = new ArrayObject(
+	array(
+		 new \Symfony\Component\Serializer\Encoder\JsonEncoder()
+	)
+);
+
+$container['doctrine.orm.entitySerializer'] = $container->share(
+	function ($container) {
+		return new \Symfony\Component\Serializer\Serializer(
+			$container['doctrine.orm.entitySerializer.normalizers']->getArrayCopy(),
+			$container['doctrine.orm.entitySerializer.encoders']->getArrayCopy()
+		);
+	}
+);
+
+$container['doctrine.orm.versionManager'] = $container->share(
+	function () {
+		return new \Contao\Doctrine\ORM\VersionManager();
 	}
 );

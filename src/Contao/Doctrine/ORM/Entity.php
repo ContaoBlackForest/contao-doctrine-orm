@@ -122,11 +122,13 @@ abstract class Entity implements \ArrayAccess
 	{
 		if ($this->__has($name)) {
 			$getter = 'get' . ucfirst($name);
-			return $this->$getter();
+
+			if (method_exists($this, $getter)) {
+				return $this->$getter();
+			}
 		}
-		else {
-			throw new \InvalidArgumentException('The entity ' . get_class($this) . ' does not have a property ' . $name);
-		}
+
+		throw new \InvalidArgumentException('The entity ' . get_class($this) . ' does not have a property ' . $name);
 	}
 
 	/**
@@ -136,11 +138,14 @@ abstract class Entity implements \ArrayAccess
 	{
 		if ($this->__has($name)) {
 			$setter = 'set' . ucfirst($name);
-			$this->$setter($value);
+
+			if (method_exists($this, $setter)) {
+				$this->$setter($value);
+				return;
+			}
 		}
-		else {
-			throw new \InvalidArgumentException('The entity ' . get_class($this) . ' does not have a property ' . $name);
-		}
+
+		throw new \InvalidArgumentException('The entity ' . get_class($this) . ' does not have a property ' . $name);
 	}
 
 	/**

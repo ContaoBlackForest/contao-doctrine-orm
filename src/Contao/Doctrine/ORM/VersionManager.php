@@ -22,78 +22,10 @@ use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Events;
 use ORM\Entity\Version;
+use Symfony\Component\Serializer\Serializer;
 
-class VersionManager implements EventSubscriber
+class VersionManager
 {
-	protected $versions = array();
-
-	/**
-	 * Returns an array of events this subscriber wants to listen to.
-	 *
-	 * @return array
-	 */
-	public function getSubscribedEvents()
-	{
-		return array(
-			'onFlush',
-		);
-	}
-
-	public function onFlush(OnFlushEventArgs $args)
-	{
-		$entityManager = $args->getEntityManager();
-		$unitOfWork    = $entityManager->getUnitOfWork();
-
-		foreach ($unitOfWork->getScheduledEntityInsertions() AS $entity) {
-			$this->createVersion('insert', $entity, $args);
-		}
-
-		foreach ($unitOfWork->getScheduledEntityUpdates() AS $entity) {
-			$this->createVersion('update', $entity, $args);
-		}
-
-		foreach ($unitOfWork->getScheduledEntityDeletions() AS $entity) {
-			$this->createVersion('delete', $entity, $args);
-		}
-
-		if (count($this->versions)) {
-			$metadata = $entityManager->getClassMetadata('ORM:Version');
-			while (count($this->versions)) {
-				$version = array_shift($this->versions);
-
-				$entityManager->persist($version);
-				$unitOfWork->computeChangeSet($metadata, $version);
-			}
-		}
-	}
-
-	protected function createVersion($action, $entity, OnFlushEventArgs $args)
-	{
-		$entityManager = $args->getEntityManager();
-		if ($entity instanceof Entity && !$entity instanceof Version) {
-			$changeSet = $entityManager
-				->getUnitOfWork()
-				->getEntityChangeSet($entity);
-
-			$originalData = $entity->toArray();
-			// restore original values
-			foreach ($changeSet as $field => $change) {
-				$originalData[$field] = $change[0];
-			}
-
-			$previousVersion = static::findVersion($entity, $originalData);
-
-			$version = new Version();
-			$version->setEntityClass(Helper::createShortenEntityName($entity));
-			$version->setEntityId($entity->id());
-			$version->setEntityHash(static::calculateHash($entity->toArray()));
-			$version->setAction($action);
-			$version->setPrevious($previousVersion ? $previousVersion->getId() : null);
-			$version->setData(json_encode($entity->toArray()));
-			$this->versions[] = $version;
-		}
-	}
-
 	/**
 	 * Calculate a hash from an entity to identify a version.
 	 *
@@ -140,7 +72,14 @@ class VersionManager implements EventSubscriber
 		return $hash;
 	}
 
-	static public function findVersion(Entity $entity, $entityData = null)
+	public function getVersion($versionId)
+	{
+		$versionRepository = EntityHelper::getRepository('ORM:Version');
+
+		return $versionRepository->find($versionId);
+	}
+
+	public function findVersion(Entity $entity, $entityData = null)
 	{
 		$versionRepository = EntityHelper::getRepository('ORM:Version');
 
@@ -156,5 +95,62 @@ class VersionManager implements EventSubscriber
 			),
 			array('createdAt' => 'DESC')
 		);
+	}
+
+	public function findVersions(Entity $entity)
+	{
+		$versionRepository = EntityHelper::getRepository('ORM:Version');
+
+		$entityClassName = Helper::createShortenEntityName($entity);
+		$entityId        = $entity->id();
+
+		return $versionRepository->findBy(
+			array(
+				 'entityClass' => $entityClassName,
+				 'entityId'    => $entityId,
+			),
+			array('createdAt' => 'DESC')
+		);
+	}
+
+	public function getEntityVersion($version)
+	{
+		if (is_string($version)) {
+			$version = $this->getVersion($version);
+		}
+		if ($version === null) {
+			return null;
+		}
+		if (!$version instanceof Version) {
+			throw new \RuntimeException('Version ID or entity is expected for VersionManager::getEntityVersion, got ' . gettype($version));
+		}
+
+		/** @var Serializer $serializer */
+		$serializer = $GLOBALS['container']['doctrine.orm.entitySerializer'];
+
+		$entityManager = EntityHelper::getEntityManager();
+		$entityRepository = EntityHelper::getRepository($version->getEntityClass());
+
+		/** @var Entity $entity */
+		$entity = $entityRepository->find($version->getEntityId());
+
+		/** @var Entity $entity */
+		$previousEntity = $serializer->deserialize(
+			$version->getData(),
+			$entityRepository->getClassName(),
+			'json'
+		);
+
+		$targetClass = new \ReflectionClass($entity);
+		$sourceClass = new \ReflectionClass($previousEntity);
+
+		foreach ($sourceClass->getProperties() as $sourceProperty) {
+			$targetProperty = $targetClass->getProperty($sourceProperty->getName());
+			$sourceProperty->setAccessible(true);
+			$targetProperty->setAccessible(true);
+			$targetProperty->setValue($entity, $sourceProperty->getValue($previousEntity));
+		}
+
+		return $entity;
 	}
 }

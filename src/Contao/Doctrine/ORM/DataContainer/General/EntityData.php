@@ -81,7 +81,7 @@ class EntityData implements \InterfaceGeneralData
 	/**
 	 * @param Entity[] $entities
 	 *
-	 * @return EntityModel[]
+	 * @return GeneralCollectionDefault
 	 */
 	public function mapEntities($entities)
 	{
@@ -100,6 +100,30 @@ class EntityData implements \InterfaceGeneralData
 	public function mapEntity($entity)
 	{
 		return new EntityModel($entity);
+	}
+
+	/**
+	 * @param Version[] $versions
+	 *
+	 * @return GeneralCollectionDefault
+	 */
+	public function mapVersions($versions, $activeVersion = false)
+	{
+		$collection = new GeneralCollectionDefault();
+		foreach ($versions as $version) {
+			$collection->add($this->mapVersion($version, $activeVersion));
+		}
+		return $collection;
+	}
+
+	/**
+	 * @param Version $version
+	 *
+	 * @return VersionModel
+	 */
+	public function mapVersion($version, $activeVersion = false)
+	{
+		return new VersionModel($version, $activeVersion ? ($version->getId() == $activeVersion) : false);
 	}
 
 	/**
@@ -209,7 +233,9 @@ class EntityData implements \InterfaceGeneralData
 			$entity = $item->getEntity();
 		}
 		else {
-			$entity = $this->getEntityRepository()->find($item);
+			$entity = $this
+				->getEntityRepository()
+				->find($item);
 		}
 
 		$entityManager->remove($entity);
@@ -217,12 +243,7 @@ class EntityData implements \InterfaceGeneralData
 	}
 
 	/**
-	 * Save a new Version of a record
-	 *
-	 * @param int    $intID      ID of current record
-	 * @param string $strVersion Version number
-	 *
-	 * @return void
+	 * {@inheritdoc}
 	 */
 	public function saveVersion(InterfaceGeneralModel $objModel, $strUsername)
 	{
@@ -230,53 +251,63 @@ class EntityData implements \InterfaceGeneralData
 	}
 
 	/**
-	 * Return a model based of the version information
-	 *
-	 * @param mix $mixID      The ID of record
-	 * @param mix $mixVersion The ID of the Version
-	 *
-	 * @return InterfaceGeneralModel
+	 * {@inheritdoc}
 	 */
 	public function getVersion($mixID, $mixVersion)
 	{
-		// TODO: Implement getVersion() method.
+		/** @var VersionManager $versionManager */
+		/*
+		$versionManager = $GLOBALS['container']['doctrine.orm.versionManager'];
+
+		$entity = $versionManager->getEntityVersion($mixVersion);
+
+		if ($entity) {
+			return new EntityModel($entity);
+		}
+		*/
+
+		return null;
 	}
 
 	/**
-	 * Return a list with all versions for this row
-	 *
-	 * @param mixed $mixID The ID of record
-	 *
-	 * @return InterfaceGeneralCollection
+	 * {@inheritdoc}
 	 */
 	public function getVersions($mixID, $blnOnlyActive = false)
 	{
-		// TODO: Implement getVersions() method.
+		if (!$mixID) {
+			return null;
+		}
+
+		/** @var VersionManager $versionManager */
+		$versionManager = $GLOBALS['container']['doctrine.orm.versionManager'];
+
+		$entityRepository = $this->getEntityRepository();
+		$entity           = $entityRepository->find($mixID);
+		$version          = $this->getActiveVersion($entity);
+		$versions         = $versionManager->findVersions($entity);
+
+		return $this->mapVersions($versions, $version);
 	}
 
 	/**
-	 * Set a Version as active.
-	 *
-	 * @param mix $mixID      The ID of record
-	 * @param mix $mixVersion The ID of the Version
+	 * {@inheritdoc}
 	 */
 	public function setVersionActive($mixID, $mixVersion)
 	{
-		// TODO: Implement setVersionActive() method.
+		// do nothing, the version manager cannot handle active versions
 	}
 
 	/**
-	 * Return the active version from a record
-	 *
-	 * @param mix $mixID The ID of record
-	 *
-	 * @return mix Version ID
+	 * {@inheritdoc}
 	 */
 	public function getActiveVersion($mixID)
 	{
+		/** @var VersionManager $versionManager */
+		$versionManager = $GLOBALS['container']['doctrine.orm.versionManager'];
+
 		$entityRepository = $this->getEntityRepository();
-		$entity = $entityRepository->find($mixID);
-		$version = VersionManager::findVersion($entity);
+		$entity           = $entityRepository->find($mixID);
+		$version          = $versionManager->findVersion($entity);
 
 		if ($version) {
 			return $version->id();
@@ -297,6 +328,7 @@ class EntityData implements \InterfaceGeneralData
 	public function resetFallback($strField)
 	{
 		// TODO: Implement resetFallback() method.
+		return null;
 	}
 
 	/**
@@ -327,9 +359,9 @@ class EntityData implements \InterfaceGeneralData
 		foreach ($keys as $index => $key) {
 			$queryBuilder
 				->andWhere(
-				$queryBuilder
-					->expr()
-					->neq('e.' . $key, ':key' . $index)
+					$queryBuilder
+						->expr()
+						->neq('e.' . $key, ':key' . $index)
 				)
 				->setParameter(':key' . $index, $idValues[$index]);
 		}
@@ -386,11 +418,21 @@ class EntityData implements \InterfaceGeneralData
 
 		$entityManager = $this->getEntityManager();
 		$queryBuilder  = $entityManager->createQueryBuilder();
-		return $queryBuilder
+		$values = $queryBuilder
 			->select('DISTINCT e.' . $property)
 			->from($this->entityClassName, 'e')
 			->orderBy('e.' . $property)
 			->getQuery()
 			->getResult();
+
+		$collection = new GeneralCollectionDefault();
+		if ($values) {
+			foreach ($values as $value) {
+				$model = new \GeneralModelDefault();
+				$model->setProperty($property, $value[$property]);
+				$collection->add($model);
+			}
+		}
+		return $collection;
 	}
 }

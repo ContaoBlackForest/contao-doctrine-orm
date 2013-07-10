@@ -31,6 +31,12 @@ $GLOBALS['TL_DCA']['orm_version'] = array(
 				'type' => 'string',
 			)
 		),
+		'createdAt'   => array(
+			'field' => array(
+				'type'          => 'datetime',
+				'timestampable' => array('on' => 'create')
+			)
+		),
 		'entityClass' => array
 		(
 			'field' => array(
@@ -58,12 +64,6 @@ $GLOBALS['TL_DCA']['orm_version'] = array(
 				'options' => array('fixed' => true),
 			)
 		),
-		'createdAt'   => array(
-			'field' => array(
-				'type'          => 'datetime',
-				'timestampable' => array('on' => 'create')
-			)
-		),
 		'previous'    => array
 		(
 			'field' => array(
@@ -77,6 +77,24 @@ $GLOBALS['TL_DCA']['orm_version'] = array(
 		(
 			'field' => array(
 				'type' => 'text'
+			)
+		),
+		'changes'        => array
+		(
+			'field' => array(
+				'type' => 'text'
+			)
+		),
+		'userId'        => array
+		(
+			'field' => array(
+				'type' => 'integer'
+			)
+		),
+		'username'        => array
+		(
+			'field' => array(
+				'type' => 'string'
 			)
 		),
 	)

@@ -17,17 +17,21 @@ namespace Contao\Doctrine\ORM\DataContainer\General;
 
 use Contao\Doctrine\ORM\Entity;
 use InterfaceGeneralModel;
+use ORM\Entity\Version;
 
-class EntityModel extends \AbstractGeneralModel
+class VersionModel extends \AbstractGeneralModel
 {
 	/**
-	 * @var Entity
+	 * @var Version
 	 */
-	protected $entity;
+	protected $version;
 
-	function __construct($entity)
+	protected $active;
+
+	function __construct($version, $active)
 	{
-		$this->entity = $entity;
+		$this->version = $version;
+		$this->active  = $active;
 	}
 
 	/**
@@ -35,15 +39,14 @@ class EntityModel extends \AbstractGeneralModel
 	 */
 	public function __clone()
 	{
-		$this->entity = $this->entity->duplicate(true);
 	}
 
 	/**
-	 * @return Entity
+	 * @return Version
 	 */
-	public function getEntity()
+	public function getVersion()
 	{
-		return $this->entity;
+		return $this->version;
 	}
 
 	/**
@@ -51,10 +54,10 @@ class EntityModel extends \AbstractGeneralModel
 	 */
 	public function getID()
 	{
-		$entity = $this->getEntity();
+		$version = $this->getVersion();
 
-		if ($entity) {
-			return $entity->id();
+		if ($version) {
+			return $version->id();
 		}
 
 		return null;
@@ -65,11 +68,7 @@ class EntityModel extends \AbstractGeneralModel
 	 */
 	public function setID($mixID)
 	{
-		$entity = $this->getEntity();
-
-		if ($entity) {
-			$entity->id($mixID);
-		}
+		// unsupported for versions
 	}
 
 	/**
@@ -77,15 +76,23 @@ class EntityModel extends \AbstractGeneralModel
 	 */
 	public function getProperty($strPropertyName)
 	{
-		$entity = $this->getEntity();
+		$version = $this->getVersion();
 
-		if ($entity) {
-			try {
-				return $entity->$strPropertyName;
+		if ($version) {
+			switch ($strPropertyName) {
+				case 'version':
+					return $version->getId();
+
+				case 'active':
+					return $this->active;
+
+				case 'tstamp':
+					return $version->getCreatedAt()->getTimestamp();
+
+				case 'username':
+					return $version->getUsername();
 			}
-			catch (\InvalidArgumentException $e) {
-				// silent ignore unknown properties in read mode
-			}
+			return $version->$strPropertyName;
 		}
 
 		return null;
@@ -96,11 +103,7 @@ class EntityModel extends \AbstractGeneralModel
 	 */
 	public function setProperty($strPropertyName, $varValue)
 	{
-		$entity = $this->getEntity();
-
-		if ($entity) {
-			$entity->$strPropertyName = $varValue;
-		}
+		// unsupported for versions
 	}
 
 	/**
@@ -108,10 +111,10 @@ class EntityModel extends \AbstractGeneralModel
 	 */
 	public function getPropertiesAsArray()
 	{
-		$entity = $this->getEntity();
+		$version = $this->getVersion();
 
-		if ($entity) {
-			return $entity->toArray();
+		if ($version) {
+			return $version->toArray();
 		}
 
 		return array();
@@ -122,11 +125,7 @@ class EntityModel extends \AbstractGeneralModel
 	 */
 	public function setPropertiesAsArray($arrProperties)
 	{
-		$entity = $this->getEntity();
-
-		if ($entity) {
-			$entity->fromArray($arrProperties);
-		}
+		// unsupported for versions
 	}
 
 	/**
@@ -134,7 +133,7 @@ class EntityModel extends \AbstractGeneralModel
 	 */
 	public function hasProperties()
 	{
-		return (bool) $this->getEntity();
+		return (bool) $this->getVersion();
 	}
 
 	/**
@@ -142,8 +141,8 @@ class EntityModel extends \AbstractGeneralModel
 	 */
 	public function getProviderName()
 	{
-		$entity = $this->getEntity();
-		return $entity::TABLE_NAME;
+		$version = $this->getVersion();
+		return $version::TABLE_NAME;
 	}
 
 	/**
@@ -151,6 +150,6 @@ class EntityModel extends \AbstractGeneralModel
 	 */
 	public function getIterator()
 	{
-		return new \ArrayIterator($this->getEntity()->toArray());
+		return new \ArrayIterator($this->getVersion()->toArray());
 	}
 }
