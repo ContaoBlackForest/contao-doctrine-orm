@@ -56,9 +56,7 @@ class GenerateProxiesCommand extends Command
 		/** @var EntityManager $entityManager */
 		$entityManager = $container['doctrine.orm.entityManager'];
 
-        $classMetadataFactory = new DisconnectedClassMetadataFactory();
-        $classMetadataFactory->setEntityManager($entityManager);
-        $metadatas = $classMetadataFactory->getAllMetadata();
+        $metadatas = $entityManager->getMetadataFactory()->getAllMetadata();
 
         if (count($metadatas)) {
             // Generating Proxies
