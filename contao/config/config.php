@@ -38,37 +38,37 @@ $GLOBALS['CONSOLE_CMD'][] = 'Doctrine\ORM\Tools\Console\Command\InfoCommand';
 /**
  * Field types
  */
-$GLOBALS['DOCTRINE_TYPE_MAP']['text']               = array('type' => 'string');
-$GLOBALS['DOCTRINE_TYPE_MAP']['text_multiple']      = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['password']           = array('type' => 'string');
-$GLOBALS['DOCTRINE_TYPE_MAP']['password_multiple']  = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['textStore']          = array('type' => 'string');
-$GLOBALS['DOCTRINE_TYPE_MAP']['textStore_multiple'] = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['textarea']           = array('type' => 'text');
-$GLOBALS['DOCTRINE_TYPE_MAP']['select']             = array('type' => 'string');
-$GLOBALS['DOCTRINE_TYPE_MAP']['select_multiple']    = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['select_foreignKey']  = array('type' => 'integer');
-$GLOBALS['DOCTRINE_TYPE_MAP']['checkbox']           = array('type' => 'contaoBoolean');
-$GLOBALS['DOCTRINE_TYPE_MAP']['checkbox_multiple']  = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['checkboxWizard']     = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['radio']              = array('type' => 'string');
-$GLOBALS['DOCTRINE_TYPE_MAP']['radio_multiple']     = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['radio_foreignKey']   = array('type' => 'integer');
-$GLOBALS['DOCTRINE_TYPE_MAP']['radioTable']         = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['inputUnit']          = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['trbl']               = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['chmod']              = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['pageTree']           = array('type' => 'integer');
-$GLOBALS['DOCTRINE_TYPE_MAP']['pageTree_multiple']  = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['fileTree']           = array('type' => 'text');
-$GLOBALS['DOCTRINE_TYPE_MAP']['fileTree_multiple']  = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['tableWizard']        = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['listWizard']         = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['optionWizard']       = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['moduleWizard']       = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['keyValueWizard']     = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['imageSize']          = array('type' => 'serialized', 'length' => 65532);
-$GLOBALS['DOCTRINE_TYPE_MAP']['timePeriod']         = array('type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['text']               = array('nullable' => true, 'type' => 'string');
+$GLOBALS['DOCTRINE_TYPE_MAP']['text_multiple']      = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['password']           = array('nullable' => true, 'type' => 'string');
+$GLOBALS['DOCTRINE_TYPE_MAP']['password_multiple']  = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['textStore']          = array('nullable' => true, 'type' => 'string');
+$GLOBALS['DOCTRINE_TYPE_MAP']['textStore_multiple'] = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['textarea']           = array('nullable' => true, 'type' => 'text');
+$GLOBALS['DOCTRINE_TYPE_MAP']['select']             = array('nullable' => true, 'type' => 'string');
+$GLOBALS['DOCTRINE_TYPE_MAP']['select_multiple']    = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['select_foreignKey']  = array('nullable' => true, 'type' => 'integer');
+$GLOBALS['DOCTRINE_TYPE_MAP']['checkbox']           = array('nullable' => true, 'type' => 'boolean');
+$GLOBALS['DOCTRINE_TYPE_MAP']['checkbox_multiple']  = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['checkboxWizard']     = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['radio']              = array('nullable' => true, 'type' => 'string');
+$GLOBALS['DOCTRINE_TYPE_MAP']['radio_multiple']     = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['radio_foreignKey']   = array('nullable' => true, 'type' => 'integer');
+$GLOBALS['DOCTRINE_TYPE_MAP']['radioTable']         = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['inputUnit']          = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['trbl']               = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['chmod']              = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['pageTree']           = array('nullable' => true, 'type' => 'integer');
+$GLOBALS['DOCTRINE_TYPE_MAP']['pageTree_multiple']  = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['fileTree']           = array('nullable' => true, 'type' => 'text');
+$GLOBALS['DOCTRINE_TYPE_MAP']['fileTree_multiple']  = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['tableWizard']        = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['listWizard']         = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['optionWizard']       = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['moduleWizard']       = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['keyValueWizard']     = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['imageSize']          = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['timePeriod']         = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
 
 
 /**
