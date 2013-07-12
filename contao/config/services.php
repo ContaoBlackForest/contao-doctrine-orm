@@ -53,10 +53,6 @@ $container['doctrine.orm.proxiesCacheDir'] = $container->share(
 			mkdir($proxiesCacheDir, 0777, true);
 		}
 
-		$classLoader = new \Composer\Autoload\ClassLoader();
-		$classLoader->add('', array($proxiesCacheDir), true);
-		$classLoader->register(true);
-
 		return $proxiesCacheDir;
 	}
 );
@@ -67,10 +63,6 @@ $container['doctrine.orm.repositoriesCacheDir'] = $container->share(
 		if (!is_dir($repositoriesCacheDir)) {
 			mkdir($repositoriesCacheDir, 0777, true);
 		}
-
-		$classLoader = new \Composer\Autoload\ClassLoader();
-		$classLoader->add('', array($repositoriesCacheDir), true);
-		$classLoader->register(true);
 
 		return $repositoriesCacheDir;
 	}

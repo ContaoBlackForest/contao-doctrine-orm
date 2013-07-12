@@ -48,7 +48,7 @@ $GLOBALS['TL_DCA']['orm_version'] = array(
 				'type' => 'string',
 			)
 		),
-		'entityHash'        => array
+		'entityHash'  => array
 		(
 			'field' => array(
 				'type'    => 'string',
@@ -79,22 +79,25 @@ $GLOBALS['TL_DCA']['orm_version'] = array(
 				'type' => 'text'
 			)
 		),
-		'changes'        => array
+		'changes'     => array
 		(
 			'field' => array(
-				'type' => 'text'
+				'type' => 'text',
+				'nullable' => true,
 			)
 		),
-		'userId'        => array
+		'userId'      => array
 		(
 			'field' => array(
-				'type' => 'integer'
+				'type'     => 'integer',
+				'nullable' => true,
 			)
 		),
-		'username'        => array
+		'username'    => array
 		(
 			'field' => array(
-				'type' => 'string'
+				'type'     => 'string',
+				'nullable' => true,
 			)
 		),
 	)

@@ -221,7 +221,7 @@ class EntityData implements \InterfaceGeneralData
 			$queryBuilder->setMaxResults($config->getAmount());
 		}
 
-		$query = $queryBuilder->getQuery();
+		$query    = $queryBuilder->getQuery();
 		$entities = $query->getResult();
 
 		return $this->mapEntities($entities);
@@ -392,19 +392,21 @@ class EntityData implements \InterfaceGeneralData
 	 */
 	public function getVersions($mixID, $blnOnlyActive = false)
 	{
-		if (!$mixID) {
-			return null;
+		if ($mixID) {
+			/** @var VersionManager $versionManager */
+			$versionManager = $GLOBALS['container']['doctrine.orm.versionManager'];
+
+			$entityRepository = $this->getEntityRepository();
+			$entity           = $entityRepository->find($mixID);
+			if ($entity) {
+				$version          = $this->getActiveVersion($entity);
+				$versions         = $versionManager->findVersions($entity);
+
+				return $this->mapVersions($versions, $version);
+			}
 		}
 
-		/** @var VersionManager $versionManager */
-		$versionManager = $GLOBALS['container']['doctrine.orm.versionManager'];
-
-		$entityRepository = $this->getEntityRepository();
-		$entity           = $entityRepository->find($mixID);
-		$version          = $this->getActiveVersion($entity);
-		$versions         = $versionManager->findVersions($entity);
-
-		return $this->mapVersions($versions, $version);
+		return null;
 	}
 
 	/**
@@ -420,19 +422,19 @@ class EntityData implements \InterfaceGeneralData
 	 */
 	public function getActiveVersion($mixID)
 	{
-		/** @var VersionManager $versionManager */
-		$versionManager = $GLOBALS['container']['doctrine.orm.versionManager'];
+		if ($mixID) {
+			/** @var VersionManager $versionManager */
+			$versionManager = $GLOBALS['container']['doctrine.orm.versionManager'];
 
-		$entityRepository = $this->getEntityRepository();
-		$entity           = $entityRepository->find($mixID);
-		$version          = $versionManager->findVersion($entity);
+			$entityRepository = $this->getEntityRepository();
+			$entity           = $entityRepository->find($mixID);
+			$version          = $versionManager->findVersion($entity);
 
-		if ($version) {
-			return $version->id();
+			if ($version) {
+				return $version->id();
+			}
 		}
-		else {
-			return null;
-		}
+		return null;
 	}
 
 	/**
