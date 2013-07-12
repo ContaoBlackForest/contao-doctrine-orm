@@ -29,7 +29,7 @@ class EntityNormalizer extends SerializerAwareNormalizer implements NormalizerIn
 	 */
 	public function normalize($object, $format = null, array $context = array())
 	{
-		$attributes = $object->toArray();
+		$attributes = $object->toArray(true);
 
 		foreach ($attributes as $key => $value) {
 			if ($value instanceof Entity || $value instanceof Collection) {

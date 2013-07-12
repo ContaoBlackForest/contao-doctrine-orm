@@ -16,6 +16,7 @@
 namespace Contao\Doctrine\ORM;
 
 use Contao\Doctrine\ORM\Event\DuplicateEntity;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Proxy\Proxy;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -175,7 +176,7 @@ abstract class Entity implements \ArrayAccess
 	 *
 	 * @return array
 	 */
-	public function toArray()
+	public function toArray($noReferences = false)
 	{
 		if ($this instanceof Proxy) {
 			$this->__load();
@@ -184,7 +185,17 @@ abstract class Entity implements \ArrayAccess
 		$data = array();
 		foreach ($this as $key => $value) {
 			if ($value instanceof Entity) {
-				$data[$key] = $value->toArray();
+				if (!$noReferences) {
+					$data[$key] = $value->id;
+				}
+			}
+			else if ($value instanceof Collection) {
+				if (!$noReferences) {
+					$data[$key] = array();
+					foreach ($value as $item) {
+						$data[$key][] = $item->id();
+					}
+				}
 			}
 			else {
 				$data[$key] = $value;

@@ -22,6 +22,7 @@ use Contao\Doctrine\ORM\VersionManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query;
+use Doctrine\ORM\QueryBuilder;
 use GeneralCollectionDefault;
 use GeneralDataConfigDefault;
 use InterfaceGeneralCollection;
@@ -182,8 +183,125 @@ class EntityData implements \InterfaceGeneralData
 	 */
 	public function fetchAll(InterfaceGeneralDataConfig $config)
 	{
-		$repository = $this->getEntityRepository();
-		return $this->mapEntities($repository->findAll());
+		$entityRepository = $this->getEntityRepository();
+		$entityManager    = $this->getEntityManager();
+		$queryBuilder     = $entityManager->createQueryBuilder();
+
+		$queryBuilder
+			->select('e')
+			->from($entityRepository->getClassName(), 'e');
+
+		if ($config->getFilter()) {
+			$queryBuilder->where(
+				$this->buildCondition(
+					$queryBuilder,
+					array('operation' => 'AND', 'childs' => $config->getFilter())
+				)
+			);
+		}
+
+		if ($config->getSorting()) {
+			$firstOrderBy = true;
+			foreach ($config->getSorting() as $sort => $order) {
+				if ($firstOrderBy) {
+					$queryBuilder->orderBy('e.' . $sort, $order);
+					$firstOrderBy = false;
+				}
+				else {
+					$queryBuilder->addOrderBy('e.' . $sort, $order);
+				}
+			}
+		}
+
+		if ($config->getStart()) {
+			$queryBuilder->setFirstResult($config->getStart());
+		}
+
+		if ($config->getAmount()) {
+			$queryBuilder->setMaxResults($config->getAmount());
+		}
+
+		$query = $queryBuilder->getQuery();
+		$entities = $query->getResult();
+
+		return $this->mapEntities($entities);
+	}
+
+	protected function buildCondition(QueryBuilder $queryBuilder, $condition, &$parameterIndex = 1)
+	{
+		switch ($condition['operation']) {
+			case 'AND':
+			case 'OR':
+				$parts = array();
+				foreach ($condition['childs'] as $arrChild) {
+					$parts[] = $this->buildCondition($queryBuilder, $arrChild, $parameterIndex);
+				}
+
+				if ($condition['operation'] == 'AND') {
+					return call_user_func_array(
+						array($queryBuilder->expr(), 'andX'),
+						$parts
+					);
+				}
+				else {
+					return call_user_func_array(
+						array($queryBuilder->expr(), 'orX'),
+						$parts
+					);
+				}
+				break;
+
+			case '=':
+			case '>':
+			case '>=':
+			case '<':
+			case '<=':
+			case 'IN':
+				$property = 'e.' . $condition['property'];
+
+				if ($condition['value'] === null) {
+					return $queryBuilder
+						->expr()
+						->isNull($property);
+				}
+
+				$parameter = ':parameter' . ($parameterIndex++);
+				$queryBuilder->setParameter($parameter, $condition['value']);
+
+				switch ($condition['operation']) {
+					case '=':
+						return $queryBuilder
+							->expr()
+							->eq($property, $parameter);
+					case '>':
+						return $queryBuilder
+							->expr()
+							->gt($property, $parameter);
+					case '>=':
+						return $queryBuilder
+							->expr()
+							->gte($property, $parameter);
+					case '<':
+						return $queryBuilder
+							->expr()
+							->lt($property, $parameter);
+					case '<=':
+						return $queryBuilder
+							->expr()
+							->lte($property, $parameter);
+					case 'IN':
+						return $queryBuilder
+							->expr()
+							->in($property, $parameter);
+				}
+				break;
+
+			default:
+				throw new \Exception('Error processing filter array - unknown operation ' . var_export(
+					$condition,
+					true
+				), 1);
+		}
 	}
 
 	/**
@@ -418,7 +536,7 @@ class EntityData implements \InterfaceGeneralData
 
 		$entityManager = $this->getEntityManager();
 		$queryBuilder  = $entityManager->createQueryBuilder();
-		$values = $queryBuilder
+		$values        = $queryBuilder
 			->select('DISTINCT e.' . $property)
 			->from($this->entityClassName, 'e')
 			->orderBy('e.' . $property)
