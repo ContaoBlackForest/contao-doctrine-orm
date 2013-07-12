@@ -37,4 +37,30 @@ class EntityHelper
 		$entityManager = static::getEntityManager();
 		return $entityManager->getRepository($className);
 	}
+
+	/**
+	 * Search an entity by an combined id, fetched by Entity::id()
+	 *
+	 * @param \ReflectionClass|string $class
+	 * @param string $combinedId
+	 *
+	 * @return Entity|null
+	 */
+	static public function findByCombinedId($class, $combinedId)
+	{
+		if (!$class instanceof \ReflectionClass) {
+			$class = new \ReflectionClass($class);
+		}
+
+		$keySeparator = $class->getConstant('KEY_SEPARATOR');
+		$keyDeclaration = $class->getConstant('KEY');
+		$keys = explode(',', $keyDeclaration);
+		$ids = explode($keySeparator, $combinedId);
+		$criteria = array_combine($keys, $ids);
+
+		$repository = static::getRepository($class->getName());
+		$entity = $repository->findOneBy($criteria);
+
+		return $entity;
+	}
 }

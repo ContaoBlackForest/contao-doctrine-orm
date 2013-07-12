@@ -16,6 +16,7 @@
 namespace Contao\Doctrine\ORM;
 
 use Contao\Doctrine\ORM\Entity;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\EventArgs;
 use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\Event\LifecycleEventArgs;
@@ -38,8 +39,13 @@ class VersionManager
 	{
 		if ($entity instanceof Entity) {
 			$entityData = $entity->toArray();
+			ksort($entityData);
 		}
 		else if (is_array($entity)) {
+			$entityData = $entity;
+			ksort($entityData);
+		}
+		else if ($entity instanceof \Traversable) {
 			$entityData = $entity;
 		}
 		else {
@@ -48,24 +54,24 @@ class VersionManager
 			) . ' for VersionManager::calculateHash');
 		}
 
-		ksort($entityData);
-		$hash = array_map(
-			function ($value) {
-				if (is_array($value) || $value instanceof Entity) {
-					return static::calculateHash($value);
-				}
-				else if (!is_object($value) || method_exists($value, '__toString')) {
-					return (string) $value;
-				}
-				else if ($value instanceof \DateTime) {
-					return $value->getTimestamp();
-				}
-				else {
-					throw new \RuntimeException('Do not know how to hash object type ' . get_class($value));
-				}
-			},
-			$entityData
-		);
+		$hash = array();
+		foreach ($entityData as $value) {
+			if (is_array($value)) {
+				$hash[] = static::calculateHash($value);
+			}
+			else if (!is_object($value) || method_exists($value, '__toString')) {
+				$hash[] = (string) $value;
+			}
+			else if ($value instanceof \DateTime) {
+				$hash[] = $value->getTimestamp();
+			}
+			else if ($value instanceof Entity || $value instanceof Collection) {
+				// ignore references
+			}
+			else {
+				throw new \RuntimeException('Do not know how to hash object type ' . get_class($value));
+			}
+		}
 		$hash = implode('~', $hash);
 		$hash = md5($hash);
 
@@ -128,7 +134,6 @@ class VersionManager
 		/** @var Serializer $serializer */
 		$serializer = $GLOBALS['container']['doctrine.orm.entitySerializer'];
 
-		$entityManager = EntityHelper::getEntityManager();
 		$entityRepository = EntityHelper::getRepository($version->getEntityClass());
 
 		/** @var Entity $entity */
@@ -145,10 +150,16 @@ class VersionManager
 		$sourceClass = new \ReflectionClass($previousEntity);
 
 		foreach ($sourceClass->getProperties() as $sourceProperty) {
-			$targetProperty = $targetClass->getProperty($sourceProperty->getName());
-			$sourceProperty->setAccessible(true);
-			$targetProperty->setAccessible(true);
-			$targetProperty->setValue($entity, $sourceProperty->getValue($previousEntity));
+			$sourceValue = $sourceProperty->getValue($entity);
+			if ($sourceValue instanceof Entity || $sourceValue instanceof Collection) {
+				// skip references
+			}
+			else {
+				$targetProperty = $targetClass->getProperty($sourceProperty->getName());
+				$sourceProperty->setAccessible(true);
+				$targetProperty->setAccessible(true);
+				$targetProperty->setValue($entity, $sourceProperty->getValue($previousEntity));
+			}
 		}
 
 		return $entity;

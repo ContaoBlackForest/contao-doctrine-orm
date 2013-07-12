@@ -16,6 +16,7 @@
 namespace Contao\Doctrine\ORM\Serializer;
 
 use Contao\Doctrine\ORM\Entity;
+use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\scalar;
@@ -31,7 +32,10 @@ class EntityNormalizer extends SerializerAwareNormalizer implements NormalizerIn
 		$attributes = $object->toArray();
 
 		foreach ($attributes as $key => $value) {
-			if (null !== $value && !is_scalar($value)) {
+			if ($value instanceof Entity || $value instanceof Collection) {
+				// skip references
+			}
+			else if (null !== $value && !is_scalar($value)) {
 				$attributes[$key] = $this->serializer->normalize($value, $format);
 			}
 		}

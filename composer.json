@@ -23,6 +23,7 @@
 		"contao/core": "2.11.*",
 		"bit3/contao-doctrine-dbal": "~2.4",
 		"bit3/contao-dependency-container": "~1",
+		"bit3/contao-logger": "~1",
 		"doctrine/orm": "2.4.*",
 		"symfony/serializer": "~2.3"
 	},

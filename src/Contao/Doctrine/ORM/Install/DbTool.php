@@ -44,8 +44,12 @@ class DbTool
 		$tool      = new SchemaTool($entityManager);
 		$sqls      = $tool->getUpdateSchemaSql($metadatas);
 
+		$filter = array_map('preg_quote', $GLOBALS['DOCTRINE_IGNORE_TABLE']);
+		$filter = implode('|', $filter);
+		$filter = sprintf('~^(CREATE|ALTER|DROP) TABLE (%s)~', $filter);
+
 		foreach ($sqls as $sql) {
-			if (!preg_match('~^(CREATE|ALTER|DROP) TABLE orm_~', $sql)) {
+			if (preg_match($filter, $sql)) {
 				continue;
 			}
 

@@ -16,7 +16,10 @@
 namespace Contao\Doctrine\ORM\DataContainer\General;
 
 use Contao\Doctrine\ORM\Entity;
+use Contao\Doctrine\ORM\EntityHelper;
+use Doctrine\Common\Collections\Collection;
 use InterfaceGeneralModel;
+use Psr\Log\LoggerInterface;
 
 class EntityModel extends \AbstractGeneralModel
 {
@@ -24,6 +27,8 @@ class EntityModel extends \AbstractGeneralModel
 	 * @var Entity
 	 */
 	protected $entity;
+
+	protected $reflectionClass;
 
 	function __construct($entity)
 	{
@@ -47,6 +52,17 @@ class EntityModel extends \AbstractGeneralModel
 	}
 
 	/**
+	 * @return \ReflectionClass
+	 */
+	protected function getReflectionClass()
+	{
+		if (!$this->reflectionClass) {
+			$this->reflectionClass = new \ReflectionClass($this->entity);
+		}
+		return $this->reflectionClass;
+	}
+
+	/**
 	 * {@inheritdoc}
 	 */
 	public function getID()
@@ -63,28 +79,43 @@ class EntityModel extends \AbstractGeneralModel
 	/**
 	 * {@inheritdoc}
 	 */
-	public function setID($mixID)
+	public function setID($id)
 	{
 		$entity = $this->getEntity();
 
 		if ($entity) {
-			$entity->id($mixID);
+			$entity->id($id);
 		}
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getProperty($strPropertyName)
+	public function getProperty($propertyName)
 	{
 		$entity = $this->getEntity();
 
 		if ($entity) {
 			try {
-				return $entity->$strPropertyName;
+				$value = $entity->$propertyName;
+
+				if ($value instanceof Entity) {
+					$value = $value->id();
+				}
+				else if ($value instanceof Collection) {
+					$ids = array();
+					foreach ($value as $item) {
+						$ids[] = $item->id();
+					}
+					$value = $ids;
+				}
+
+				return $value;
 			}
 			catch (\InvalidArgumentException $e) {
-				// silent ignore unknown properties in read mode
+				/** @var LoggerInterface $logger */
+				$logger = $GLOBALS['container']['logger'];
+				$logger->warning($e->getMessage());
 			}
 		}
 
@@ -94,12 +125,58 @@ class EntityModel extends \AbstractGeneralModel
 	/**
 	 * {@inheritdoc}
 	 */
-	public function setProperty($strPropertyName, $varValue)
+	public function setProperty($propertyName, $value)
 	{
 		$entity = $this->getEntity();
 
 		if ($entity) {
-			$entity->$strPropertyName = $varValue;
+			$reflectionClass = $this->getReflectionClass();
+
+			$setter = 'set' . ucfirst($propertyName);
+			if ($reflectionClass->hasMethod($setter)) {
+				$setter = $reflectionClass->getMethod($setter);
+				$reflectionParameters = $setter->getParameters();
+				$reflectionParameter = $reflectionParameters[0];
+				$reflectionParameterClass = $reflectionParameter->getClass();
+
+				if ($value !== null && $reflectionParameterClass && $reflectionParameterClass->isSubclassOf('Contao\Doctrine\ORM\Entity')) {
+					$value = EntityHelper::findByCombinedId($reflectionParameterClass, $value);
+				}
+
+				$setter->invoke($entity, $value);
+			}
+			else {
+				$getter = 'get' . ucfirst($propertyName);
+				if ($reflectionClass->hasMethod($getter)) {
+					$getter = $reflectionClass->getMethod($getter);
+					$currentValue = $getter->invoke($entity);
+				}
+				else if ($reflectionClass->hasProperty($propertyName)) {
+					$reflectionProperty = $reflectionClass->getProperty($propertyName);
+					$reflectionProperty->setAccessible(true);
+					$currentValue = $reflectionProperty->getValue($entity);
+				}
+				else {
+					throw new \RuntimeException('Could not find property ' . $propertyName . ' on entity ' . get_class($entity));
+				}
+
+				if ($currentValue instanceof Collection) {
+					$adder = 'add' . ucfirst(rtrim($propertyName, 's'));
+					$adder = $reflectionClass->getMethod($adder);
+					$reflectionParameters = $adder->getParameters();
+					$reflectionParameter = $reflectionParameters[0];
+					$reflectionParameterClass = $reflectionParameter->getClass();
+
+					$currentValue->clear();
+					foreach (((array) $value) as $id) {
+						$item = EntityHelper::findByCombinedId($reflectionParameterClass, $id);
+						$adder->invoke($entity, $item);
+					}
+				}
+				else {
+					$entity->$propertyName = $value;
+				}
+			}
 		}
 	}
 
@@ -120,12 +197,14 @@ class EntityModel extends \AbstractGeneralModel
 	/**
 	 * {@inheritdoc}
 	 */
-	public function setPropertiesAsArray($arrProperties)
+	public function setPropertiesAsArray($properties)
 	{
 		$entity = $this->getEntity();
 
 		if ($entity) {
-			$entity->fromArray($arrProperties);
+			foreach ($properties as $propertyName => $value) {
+				$this->setProperty($propertyName, $value);
+			}
 		}
 	}
 

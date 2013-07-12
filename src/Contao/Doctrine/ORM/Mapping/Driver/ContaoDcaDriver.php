@@ -99,46 +99,64 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 				continue;
 			}
 
-			$fieldMapping = array();
-
-			$inputTypes = array($fieldConfig['inputType']);
-			$inputTypeOptions = array();
-
-			if ($fieldConfig['foreignKey']) {
-				$inputTypeOptions[] = 'foreignKey';
+			if (isset($fieldConfig['oneToOne'])) {
+				$fieldConfig['oneToOne']['fieldName'] = $fieldName;
+				$metadata->mapOneToOne($fieldConfig['oneToOne']);
 			}
-			if ($fieldConfig['eval']['multiple']) {
-				$inputTypeOptions[] = 'multiple';
+			else if (isset($fieldConfig['oneToMany'])) {
+				$fieldConfig['oneToMany']['fieldName'] = $fieldName;
+				$metadata->mapOneToMany($fieldConfig['oneToMany']);
 			}
-			for ($i=0; $i<count($inputTypeOptions); $i++) {
-				$inputTypeOption = $fieldConfig['inputType'] . '_' . $inputTypeOptions[$i];
-				array_unshift($inputTypes, $inputTypeOption);
-				for ($j=$i+1; $j<count($inputTypeOptions); $j++) {
-					$inputTypeOption .= '_' . $inputTypeOptions[$j];
+			else if (isset($fieldConfig['manyToOne'])) {
+				$fieldConfig['manyToOne']['fieldName'] = $fieldName;
+				$metadata->mapManyToOne($fieldConfig['manyToOne']);
+			}
+			else if (isset($fieldConfig['manyToMany'])) {
+				$fieldConfig['manyToMany']['fieldName'] = $fieldName;
+				$metadata->mapManyToMany($fieldConfig['manyToMany']);
+			}
+			else {
+				$fieldMapping = array();
+
+				$inputTypes = array($fieldConfig['inputType']);
+				$inputTypeOptions = array();
+
+				if ($fieldConfig['foreignKey']) {
+					$inputTypeOptions[] = 'foreignKey';
+				}
+				if ($fieldConfig['eval']['multiple']) {
+					$inputTypeOptions[] = 'multiple';
+				}
+				for ($i=0; $i<count($inputTypeOptions); $i++) {
+					$inputTypeOption = $fieldConfig['inputType'] . '_' . $inputTypeOptions[$i];
 					array_unshift($inputTypes, $inputTypeOption);
+					for ($j=$i+1; $j<count($inputTypeOptions); $j++) {
+						$inputTypeOption .= '_' . $inputTypeOptions[$j];
+						array_unshift($inputTypes, $inputTypeOption);
+					}
 				}
-			}
-			foreach ($inputTypes as $inputType) {
-				if (array_key_exists($inputType, $GLOBALS['DOCTRINE_TYPE_MAP'])) {
-					$fieldMapping = $GLOBALS['DOCTRINE_TYPE_MAP'][$inputType];
-					break;
+				foreach ($inputTypes as $inputType) {
+					if (array_key_exists($inputType, $GLOBALS['DOCTRINE_TYPE_MAP'])) {
+						$fieldMapping = $GLOBALS['DOCTRINE_TYPE_MAP'][$inputType];
+						break;
+					}
 				}
-			}
 
-			if (isset($fieldConfig['eval']['maxlength'])) {
-				$fieldMapping['length'] = (int) $fieldConfig['eval']['maxlength'];
-			}
-			if (isset($fieldConfig['eval']['unique'])) {
-				$fieldMapping['unique'] = (bool) $fieldConfig['eval']['unique'];
-			}
+				if (isset($fieldConfig['eval']['maxlength'])) {
+					$fieldMapping['length'] = (int) $fieldConfig['eval']['maxlength'];
+				}
+				if (isset($fieldConfig['eval']['unique'])) {
+					$fieldMapping['unique'] = (bool) $fieldConfig['eval']['unique'];
+				}
 
-			if (array_key_exists('field', $fieldConfig)) {
-				$fieldMapping = array_merge($fieldMapping, $fieldConfig['field']);
+				if (array_key_exists('field', $fieldConfig)) {
+					$fieldMapping = array_merge($fieldMapping, $fieldConfig['field']);
+				}
+
+				$fieldMapping['fieldName'] = $fieldName;
+
+				$metadata->mapField($fieldMapping);
 			}
-
-			$fieldMapping['fieldName'] = $fieldName;
-
-			$metadata->mapField($fieldMapping);
 		}
 
 		/*
