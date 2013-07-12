@@ -78,18 +78,21 @@ class Helper
 	 * @return string
 	 * @throws Exception
 	 */
-	static public function generateAlias($alias, Entity $entity)
+	static public function generateAlias($alias, Entity $entity, $baseField = false)
 	{
 		// Generate alias if there is none
 		if (!strlen($alias)) {
-			if ($entity->__has('title')) {
+			if ($baseField) {
+				$alias = standardize($entity->__get($baseField));
+			}
+			else if ($entity->__has('title')) {
 				$alias = standardize($entity->getTitle());
 			}
 			else if ($entity->__has('name')) {
 				$alias = standardize($entity->getName());
 			}
 			else {
-				return '';
+				throw new \RuntimeException('Cannot generate alias, do not know which field should used!');
 			}
 		}
 
