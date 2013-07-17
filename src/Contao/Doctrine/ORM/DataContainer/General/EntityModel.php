@@ -114,7 +114,7 @@ class EntityModel extends \AbstractGeneralModel
 			}
 			catch (\InvalidArgumentException $e) {
 				/** @var LoggerInterface $logger */
-				$logger = $GLOBALS['container']['logger'];
+				$logger = $GLOBALS['container']['doctrine.orm.logger'];
 				$logger->warning($e->getMessage());
 			}
 		}
