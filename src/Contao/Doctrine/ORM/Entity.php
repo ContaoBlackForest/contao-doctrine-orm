@@ -28,6 +28,14 @@ abstract class Entity implements \ArrayAccess
 
 	const KEY_SEPARATOR = ';';
 
+	const REF_IGNORE = 'ignore';
+
+	const REF_ID = 'id';
+
+	const REF_INCLUDE = 'include';
+
+	const REF_ARRAY = 'array';
+
 	/**
 	 * Get or set the ID of this entity.
 	 *
@@ -174,26 +182,61 @@ abstract class Entity implements \ArrayAccess
 	/**
 	 * Return array with all properties of this entity.
 	 *
+	 * @param string $references
+	 * @param array $recursionPath Internal use only!
+	 *
 	 * @return array
 	 */
-	public function toArray($noReferences = false)
+	public function toArray($references = self::REF_ID, array $recursionPath = array())
 	{
+		// bc fallback
+		if ($references === true) {
+			$references = static::REF_IGNORE;
+		}
+		else if ($references === false) {
+			$references = static::REF_ID;
+		}
+
 		if ($this instanceof Proxy) {
 			$this->__load();
 		}
 
+		$hash = spl_object_hash($this);
+		if (in_array($hash, $recursionPath)) {
+			return '*recursion*';
+		}
+		$recursionPath[] = $hash;
+
 		$data = array();
 		foreach ($this as $key => $value) {
 			if ($value instanceof Entity) {
-				if (!$noReferences) {
-					$data[$key] = $value->id;
+				switch ($references) {
+					case static::REF_ID:
+						$data[$key] = $value->id();
+						break;
+					case static::REF_ARRAY:
+						$data[$key] = $value->toArray($references, $recursionPath);
+						break;
+					case static::REF_INCLUDE:
+						$data[$key] = $value;
+						break;
 				}
 			}
 			else if ($value instanceof Collection) {
-				if (!$noReferences) {
+				if (!$references) {
 					$data[$key] = array();
 					foreach ($value as $item) {
-						$data[$key][] = $item->id();
+						switch ($references) {
+							case static::REF_ID:
+								$data[$key][] = $value->id();
+								break;
+							case static::REF_ARRAY:
+								$data[$key][] = $value->toArray($references, $recursionPath);
+								break;
+							case static::REF_INCLUDE:
+								$data[$key][] = $value;
+								break;
+						}
 					}
 				}
 			}
