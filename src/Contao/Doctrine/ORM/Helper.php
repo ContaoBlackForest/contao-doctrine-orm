@@ -85,6 +85,9 @@ class Helper
 			if ($baseField) {
 				$alias = standardize($entity->__get($baseField));
 			}
+			else if ($entity instanceof AliasableInterface) {
+				$alias = standardize($entity->getAliasParentValue());
+			}
 			else if ($entity->__has('title')) {
 				$alias = standardize($entity->getTitle());
 			}
