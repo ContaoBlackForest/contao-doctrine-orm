@@ -66,7 +66,11 @@ abstract class Entity implements \ArrayAccess
 		else {
 			$id = array();
 			foreach ($fields as $field) {
-				$id[] = $this->__get($field);
+				$value = $this->__get($field);
+				if ($value instanceof Entity) {
+					$value = $value->id();
+				}
+				$id[] = $value;
 			}
 		}
 		return implode(static::KEY_SEPARATOR, $id);
