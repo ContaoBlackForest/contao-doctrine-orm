@@ -86,7 +86,6 @@ $GLOBALS['DOCTRINE_ENTITIES'][]                          = 'orm_version';
 
 
 /**
- * Ignored tables
+ * Managed tables
  */
-$GLOBALS['DOCTRINE_IGNORE_TABLE'][]  = 'tl_';
-$GLOBALS['DOCTRINE_IGNORE_TABLE'][]  = 'mm_';
+$GLOBALS['DOCTRINE_MANAGED_TABLE'][]  = 'orm_';
