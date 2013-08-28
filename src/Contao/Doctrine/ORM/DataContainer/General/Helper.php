@@ -15,8 +15,10 @@
 
 namespace Contao\Doctrine\ORM\DataContainer\General;
 
+use Contao\Doctrine\ORM\AliasableInterface;
 use Contao\Doctrine\ORM\Entity;
 use Contao\Doctrine\ORM\EntityHelper;
+use DcGeneral\DC_General;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 
@@ -82,66 +84,14 @@ class Helper
 	 * @return string
 	 * @throws Exception
 	 */
-	static public function generateAlias($alias, \DC_General $dc)
+	static public function generateAlias($alias, DC_General $dc)
 	{
 		/** @var Entity $entity */
 		$entity    = $dc
+			->getEnvironment()
 			->getCurrentModel()
 			->getEntity();
-		$autoAlias = false;
 
-		// Generate alias if there is none
-		if (!strlen($alias)) {
-			$autoAlias = true;
-
-			if ($entity->__has('title')) {
-				$alias = standardize($entity->getTitle());
-			}
-			else if ($entity->__has('name')) {
-				$alias = standardize($entity->getName());
-			}
-			else {
-				return '';
-			}
-		}
-
-		$entityClass = new \ReflectionClass($entity);
-		$keys        = explode(',', $entityClass->getConstant('KEY'));
-
-		$entityManager = EntityHelper::getEntityManager();
-		$queryBuilder  = $entityManager->createQueryBuilder();
-		$queryBuilder
-			->select('COUNT(e.' . $keys[0] . ')')
-			->from($entityClass->getName(), 'e')
-			->where(
-				$queryBuilder
-					->expr()
-					->eq('e.alias', ':alias')
-			)
-			->setParameter(':alias', $alias);
-		static::extendQueryWhereId(
-			$queryBuilder,
-			$dc
-				->getCurrentModel()
-				->getID(),
-			$entity
-		);
-		$query          = $queryBuilder->getQuery();
-		$duplicateCount = $query->getResult(Query::HYDRATE_SINGLE_SCALAR);
-
-		// Check whether the news alias exists
-		if ($duplicateCount && !$autoAlias) {
-			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasExists'], $alias));
-		}
-
-		// Add ID to alias
-		if ($duplicateCount && $autoAlias) {
-			$alias .= '-' . $dc
-					->getCurrentModel()
-					->getID();
-		}
-
-		return $alias;
-
+		return \Contao\Doctrine\ORM\Helper::generateAlias($alias, $entity);
 	}
 }

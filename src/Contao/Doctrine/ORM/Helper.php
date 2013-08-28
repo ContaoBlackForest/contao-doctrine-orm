@@ -80,6 +80,8 @@ class Helper
 	 */
 	static public function generateAlias($alias, Entity $entity, $baseField = false)
 	{
+		$autoAlias = false;
+
 		// Generate alias if there is none
 		if (!strlen($alias)) {
 			if ($baseField) {
@@ -97,32 +99,44 @@ class Helper
 			else {
 				throw new \RuntimeException('Cannot generate alias, do not know which field should used!');
 			}
+
+			$baseAlias = $alias;
+			$autoAlias = true;
 		}
 
 		$entityClass = new \ReflectionClass($entity);
 		$keys        = explode(',', $entityClass->getConstant('KEY'));
 
 		$entityManager = EntityHelper::getEntityManager();
-		$queryBuilder  = $entityManager->createQueryBuilder();
-		$queryBuilder
-			->select('COUNT(e.' . $keys[0] . ')')
-			->from($entityClass->getName(), 'e')
-			->where(
-				$queryBuilder
-					->expr()
-					->eq('e.alias', ':alias')
-			)
-			->setParameter(':alias', $alias);
-		static::extendQueryWhereId(
-			$queryBuilder,
-			$entity
-		);
-		$query          = $queryBuilder->getQuery();
-		$duplicateCount = $query->getResult(Query::HYDRATE_SINGLE_SCALAR);
 
-		// Check whether the news alias exists
-		if ($duplicateCount) {
-			throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasExists'], $alias));
+		for ($aliasIndex=1; true; $aliasIndex++) {
+			$queryBuilder  = $entityManager->createQueryBuilder();
+			$queryBuilder
+				->select('COUNT(e.' . $keys[0] . ')')
+				->from($entityClass->getName(), 'e')
+				->where(
+					$queryBuilder
+						->expr()
+						->eq('e.alias', ':alias')
+				)
+				->setParameter(':alias', $alias);
+			static::extendQueryWhereId(
+				$queryBuilder,
+				$entity
+			);
+			$query          = $queryBuilder->getQuery();
+			$duplicateCount = $query->getResult(Query::HYDRATE_SINGLE_SCALAR);
+
+			// Check whether the news alias exists
+			if ($duplicateCount && $autoAlias) {
+				$alias = $baseAlias . '-' . $aliasIndex;
+			}
+			else if ($duplicateCount) {
+				throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasExists'], $alias));
+			}
+			else {
+				break;
+			}
 		}
 
 		return $alias;
