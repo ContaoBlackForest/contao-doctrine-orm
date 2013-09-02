@@ -175,8 +175,14 @@ class EntityData implements DriverInterface
 	 */
 	public function fetch(ConfigInterface $config)
 	{
-		$repository = $this->getEntityRepository();
-		return $this->mapEntity($repository->find($config->getId()));
+		if ($config->getId()) {
+			$repository = $this->getEntityRepository();
+			return $this->mapEntity($repository->find($config->getId()));
+		}
+		if ($config->getFilter()) {
+			return $this->fetchAll($config);
+		}
+		return $this->getEmptyModel();
 	}
 
 	/**
