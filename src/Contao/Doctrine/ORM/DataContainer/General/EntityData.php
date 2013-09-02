@@ -202,7 +202,7 @@ class EntityData implements DriverInterface
 			$queryBuilder->where(
 				$this->buildCondition(
 					$queryBuilder,
-					array('operation' => 'AND', 'childs' => $config->getFilter())
+					array('operation' => 'AND', 'children' => $config->getFilter())
 				)
 			);
 		}
@@ -240,7 +240,7 @@ class EntityData implements DriverInterface
 			case 'AND':
 			case 'OR':
 				$parts = array();
-				foreach ($condition['childs'] as $arrChild) {
+				foreach ($condition['children'] as $arrChild) {
 					$parts[] = $this->buildCondition($queryBuilder, $arrChild, $parameterIndex);
 				}
 
