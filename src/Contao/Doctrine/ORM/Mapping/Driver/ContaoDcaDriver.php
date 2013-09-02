@@ -44,7 +44,9 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 		global $container;
 
 		$tableName = static::classToTableName($className);
-		$this->loadDataContainer($tableName);
+		if (!isset($GLOBALS['TL_DCA'][$tableName])) {
+			$this->loadDataContainer($tableName);
+		}
 
 		try {
 			$class = new \ReflectionClass($className);
