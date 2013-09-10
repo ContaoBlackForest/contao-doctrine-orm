@@ -49,7 +49,17 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 		}
 
 		try {
-			$class = new \ReflectionClass($className);
+			/** @var ClassLoader $entitiesClassLoader */
+			$entitiesClassLoader = $container['doctrine.orm.entitiesClassLoader'];
+			if (!class_exists($className, false)) {
+				$entitiesClassLoader->loadClass($className);
+			}
+			if (class_exists($className, false)) {
+				$class = new \ReflectionClass($className);
+			}
+			else {
+				$class = false;
+			}
 		}
 		catch (\Exception $e) {
 			$class = false;

@@ -41,6 +41,7 @@ $container['doctrine.orm.entitiesCacheDir'] = $container->share(
 		$classLoader = new \Composer\Autoload\ClassLoader();
 		$classLoader->add('', array($entitiesCacheDir), true);
 		$classLoader->register(true);
+		$container['doctrine.orm.entitiesClassLoader'] = $classLoader;
 
 		return $entitiesCacheDir;
 	}
