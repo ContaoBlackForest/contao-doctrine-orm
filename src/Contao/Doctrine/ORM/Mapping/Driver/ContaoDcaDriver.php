@@ -90,6 +90,9 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 		if (array_key_exists('repositoryClass', $entityConfig)) {
 			$metadata->setCustomRepositoryClass($entityConfig['repositoryClass']);
 		}
+		else {
+			$metadata->setCustomRepositoryClass('Contao\Doctrine\ORM\Repository');
+		}
 
 		// id generator
 		if (array_key_exists('idGenerator', $entityConfig)) {
