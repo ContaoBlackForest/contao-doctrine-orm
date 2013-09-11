@@ -452,8 +452,13 @@ class EntityData implements DriverInterface
 			/** @var VersionManager $versionManager */
 			$versionManager = $GLOBALS['container']['doctrine.orm.versionManager'];
 
-			$entityRepository = $this->getEntityRepository();
-			$entity           = $entityRepository->find($mixID);
+			if (is_object($mixID)) {
+				$entity = $mixID;
+			}
+			else {
+				$entityRepository = $this->getEntityRepository();
+				$entity           = $entityRepository->find($mixID);
+			}
 			$version          = $versionManager->findVersion($entity);
 
 			if ($version) {
