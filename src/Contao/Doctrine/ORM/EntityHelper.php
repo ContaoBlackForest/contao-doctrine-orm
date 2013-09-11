@@ -42,24 +42,47 @@ class EntityHelper
 	 * Search an entity by an combined id, fetched by Entity::id()
 	 *
 	 * @param \ReflectionClass|string $class
-	 * @param string $combinedId
+	 * @param string                  $combinedId
+	 *
+	 * @return Entity|null
+	 */
+	static public function parseCombinedId($class, $combinedId)
+	{
+		if (($pos = strpos($class, ':')) !== false) {
+			$alias = substr($class, 0, $pos);
+			if (isset($GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS'][$alias])) {
+				$namespace = $GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS'][$alias];
+				$class     = $namespace . '\\' . substr($class, $pos + 1);
+			}
+		}
+
+		if (!$class instanceof \ReflectionClass) {
+			$class = new \ReflectionClass($class);
+		}
+
+		$keySeparator   = $class->getConstant('KEY_SEPARATOR');
+		$keyDeclaration = $class->getConstant('KEY');
+		$keys           = explode(',', $keyDeclaration);
+		$ids            = explode($keySeparator, $combinedId);
+		$criteria       = array_combine($keys, $ids);
+
+		return $criteria;
+	}
+
+	/**
+	 * Search an entity by an combined id, fetched by Entity::id()
+	 *
+	 * @param \ReflectionClass|string $class
+	 * @param string                  $combinedId
 	 *
 	 * @return Entity|null
 	 */
 	static public function findByCombinedId($class, $combinedId)
 	{
-		if (!$class instanceof \ReflectionClass) {
-			$class = new \ReflectionClass($class);
-		}
-
-		$keySeparator = $class->getConstant('KEY_SEPARATOR');
-		$keyDeclaration = $class->getConstant('KEY');
-		$keys = explode(',', $keyDeclaration);
-		$ids = explode($keySeparator, $combinedId);
-		$criteria = array_combine($keys, $ids);
+		$criteria = static::parseCombinedId($class, $combinedId);
 
 		$repository = static::getRepository($class->getName());
-		$entity = $repository->findOneBy($criteria);
+		$entity     = $repository->findOneBy($criteria);
 
 		return $entity;
 	}
