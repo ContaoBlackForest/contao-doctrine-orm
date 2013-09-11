@@ -380,8 +380,10 @@ class EntityData implements DriverInterface
 				->find($item);
 		}
 
-		$entityManager->remove($entity);
-		$entityManager->flush($entity);
+		if ($entity) {
+			$entityManager->remove($entity);
+			$entityManager->flush($entity);
+		}
 	}
 
 	/**
