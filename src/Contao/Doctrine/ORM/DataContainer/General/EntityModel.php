@@ -175,7 +175,12 @@ class EntityModel extends AbstractModel
 
 					$currentValue->clear();
 					foreach (((array) $value) as $id) {
-						$item = EntityHelper::findByCombinedId($reflectionParameterClass, $id);
+						if ($id instanceof Entity) {
+							$item = $id;
+						}
+						else {
+							$item = EntityHelper::findByCombinedId($reflectionParameterClass, $id);
+						}
 						$adder->invoke($entity, $item);
 					}
 				}
