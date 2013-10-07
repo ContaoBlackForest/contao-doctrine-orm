@@ -53,24 +53,67 @@ class DbTool
 				continue;
 			}
 
-			$sql = preg_replace('~orm_\w+ \(~', "\$0\n  ", $sql);
-			$sql = preg_replace('~[^\d],~', "\$0\n ", $sql);
-			$sql = str_replace(') DEFAULT CHARACTER SET', "\n) DEFAULT CHARACTER SET", $sql);
-
 			if (strpos($sql, 'CREATE TABLE') !== false) {
-				$return['CREATE'][] = $sql;
+				$return['CREATE'][] = $this->formatCreate($sql);
 			}
 			else if (strpos($sql, 'DROP TABLE') !== false) {
-				$return['DROP'][] = $sql;
+				$return['DROP'][] = $this->formatDrop($sql);
 			}
 			else if (strpos($sql, 'ALTER TABLE') !== false) {
-				$return['ALTER_CHANGE'][] = $sql;
+				$return['ALTER_CHANGE'][] = $this->formatAlter($sql);
 			}
 			else {
-				$return['ALTER_CHANGE'][] = $sql;
+				$return['ALTER_CHANGE'][] = $this->formatSql($sql);
 			}
 		}
 
 		return $return;
+	}
+
+	protected function formatCreate($sql)
+	{
+		$sql = preg_replace(
+			'~orm_\w+ \(~',
+			"\$0\n  ",
+			$sql
+		);
+		$sql = preg_replace(
+			'~[^\s]+ [^\s]+ [^\s]+,~',
+			"\$0\n ",
+			$sql
+		);
+		$sql = str_replace(
+			') DEFAULT CHARACTER SET',
+			"\n) DEFAULT CHARACTER SET",
+			$sql
+		);
+
+		return $sql;
+	}
+
+	protected function formatDrop($sql)
+	{
+		return $sql;
+	}
+
+	protected function formatAlter($sql)
+	{
+		$sql = preg_replace(
+			'#(ADD|DROP|CHANGE)#',
+			"\n  $1",
+			$sql
+		);
+		$sql = preg_replace(
+			'#(FOREIGN KEY|REFERENCES)#',
+			"\n      $1",
+			$sql
+		);
+
+		return $sql;
+	}
+
+	protected function formatSql($sql)
+	{
+		return $sql;
 	}
 }
