@@ -147,7 +147,8 @@ $container['doctrine.orm.versionManager'] = $container->share(
 );
 
 $container['doctrine.orm.logger.handler.general'] = function($container) {
-	return $container['logger.default.handlers'];
+	$factory = $container['logger.factory.handler.group'];
+	return $factory($container['logger.default.handlers']);
 };
 
 $container['doctrine.orm.logger.default.handlers'] = new ArrayObject(
@@ -156,7 +157,7 @@ $container['doctrine.orm.logger.default.handlers'] = new ArrayObject(
 
 $container['doctrine.orm.logger'] = function($container) {
 	$factory = $container['logger.factory'];
-	$logger = $factory('orm', $container['avisota.logger.default.handlers']);
+	$logger = $factory('orm', $container['doctrine.orm.logger.default.handlers']);
 
 	return $logger;
 };
