@@ -349,7 +349,7 @@ class EntityData implements DriverInterface
 	{
 		$entityManager = $this->getEntityManager();
 		$entityManager->persist($item->getEntity());
-		$entityManager->flush($item->getEntity());
+		$entityManager->flush();
 	}
 
 	/**
@@ -360,8 +360,8 @@ class EntityData implements DriverInterface
 		$entityManager = $this->getEntityManager();
 		foreach ($items as $item) {
 			$entityManager->persist($item->getEntity());
-			$entityManager->flush($item->getEntity());
 		}
+		$entityManager->flush();
 	}
 
 	/**
