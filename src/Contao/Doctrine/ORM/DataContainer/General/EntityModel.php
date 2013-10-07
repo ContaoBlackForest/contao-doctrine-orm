@@ -143,6 +143,11 @@ class EntityModel extends AbstractModel
 				if ($value !== null && $reflectionParameterClass && $reflectionParameterClass->isSubclassOf('Contao\Doctrine\ORM\Entity')) {
 					$value = EntityHelper::findByCombinedId($reflectionParameterClass, $value);
 				}
+				else if ($reflectionParameterClass && $reflectionParameterClass->getName() == 'DateTime' && !$value instanceof \DateTime) {
+					$datetime = new \DateTime();
+					$datetime->setTimestamp($value);
+					$value = $datetime;
+				}
 
 				$setter->invoke($entity, $value);
 			}
