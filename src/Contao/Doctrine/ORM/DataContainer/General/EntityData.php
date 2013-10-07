@@ -567,23 +567,27 @@ class EntityData implements DriverInterface
 			throw new \Exception('Config must contain exactly one property to be retrieved.');
 		}
 
-		$entityManager = $this->getEntityManager();
-		$queryBuilder  = $entityManager->createQueryBuilder();
-		$values        = $queryBuilder
-			->select('DISTINCT e.' . $property)
-			->from($this->entityClassName, 'e')
-			->orderBy('e.' . $property)
-			->getQuery()
-			->getResult();
-
 		$collection = new DefaultCollection();
-		if ($values) {
-			foreach ($values as $value) {
-				$model = new DefaultModel();
-				$model->setProperty($property, $value[$property]);
-				$collection->add($model);
+
+		if ($this->fieldExists($property)) {
+			$entityManager = $this->getEntityManager();
+			$queryBuilder  = $entityManager->createQueryBuilder();
+			$values        = $queryBuilder
+				->select('DISTINCT e.' . $property)
+				->from($this->entityClassName, 'e')
+				->orderBy('e.' . $property)
+				->getQuery()
+				->getResult();
+
+			if ($values) {
+				foreach ($values as $value) {
+					$model = new DefaultModel();
+					$model->setProperty($property, $value[$property]);
+					$collection->add($model);
+				}
 			}
 		}
+
 		return $collection;
 	}
 }
