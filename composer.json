@@ -22,8 +22,8 @@
 		"php":">=5.3",
 		"contao/core": ">=2.11.11,<3.3",
 		"contao-community-alliance/composer-installer": "*",
-		"bit3/contao-doctrine-dbal": "~2.4",
-		"bit3/contao-event-dispatcher": "~2.3",
+		"bit3/contao-doctrine-dbal": "~1",
+		"bit3/contao-event-dispatcher": "~1",
 		"bit3/contao-logger": "~1",
 		"doctrine/orm": "2.4.*",
 		"symfony/serializer": "~2.3"
@@ -45,7 +45,8 @@
 			}
 		},
 		"branch-alias": {
-			"dev-develop": "2.4.x-dev"
+			"dev-master": "1.0.x-dev",
+			"dev-develop": "1.1.x-dev"
 		}
 	}
 }
