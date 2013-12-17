@@ -17,12 +17,11 @@ namespace Contao\Doctrine\ORM\DataContainer\General;
 
 use Contao\Doctrine\ORM\Entity;
 use Contao\Doctrine\ORM\EntityHelper;
-use DcGeneral\Data\AbstractModel;
 use Doctrine\Common\Collections\Collection;
 use InterfaceGeneralModel;
 use Psr\Log\LoggerInterface;
 
-class EntityModel extends AbstractModel
+class EntityModel extends \AbstractGeneralModel
 {
 	/**
 	 * @var Entity

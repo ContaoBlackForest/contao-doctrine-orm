@@ -19,19 +19,18 @@ use Contao\Doctrine\ORM\Entity;
 use Contao\Doctrine\ORM\EntityHelper;
 use Contao\Doctrine\ORM\Mapping\Driver\ContaoDcaDriver;
 use Contao\Doctrine\ORM\VersionManager;
-use DcGeneral\Data\CollectionInterface;
-use DcGeneral\Data\DefaultCollection;
-use DcGeneral\Data\DefaultConfig;
-use DcGeneral\Data\DefaultModel;
-use DcGeneral\Data\ModelInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
-use DcGeneral\Data\ConfigInterface;
-use DcGeneral\Data\DriverInterface;
+use GeneralCollectionDefault;
+use GeneralDataConfigDefault;
+use InterfaceGeneralCollection;
+use InterfaceGeneralDataConfig;
+use InterfaceGeneralModel;
+use Module;
 
-class EntityData implements DriverInterface
+class EntityData implements \InterfaceGeneralData
 {
 	/**
 	 * @var string
@@ -87,7 +86,7 @@ class EntityData implements DriverInterface
 	 */
 	public function mapEntities($entities)
 	{
-		$collection = new DefaultCollection();
+		$collection = new GeneralCollectionDefault();
 		foreach ($entities as $entity) {
 			$collection->add($this->mapEntity($entity));
 		}
@@ -107,11 +106,11 @@ class EntityData implements DriverInterface
 	/**
 	 * @param Version[] $versions
 	 *
-	 * @return DefaultCollection
+	 * @return GeneralCollectionDefault
 	 */
 	public function mapVersions($versions, $activeVersion = false)
 	{
-		$collection = new DefaultCollection();
+		$collection = new GeneralCollectionDefault();
 		foreach ($versions as $version) {
 			$collection->add($this->mapVersion($version, $activeVersion));
 		}
@@ -151,7 +150,7 @@ class EntityData implements DriverInterface
 	 */
 	public function getEmptyConfig()
 	{
-		return DefaultConfig::init();
+		return GeneralDataConfigDefault::init();
 	}
 
 	/**
@@ -167,13 +166,13 @@ class EntityData implements DriverInterface
 	 */
 	public function getEmptyCollection()
 	{
-		return new DefaultCollection();
+		return new GeneralCollectionDefault();
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	public function fetch(ConfigInterface $config)
+	public function fetch(InterfaceGeneralDataConfig $config)
 	{
 		if ($config->getId()) {
 			$repository = $this->getEntityRepository();
@@ -188,7 +187,7 @@ class EntityData implements DriverInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function fetchAll(ConfigInterface $config)
+	public function fetchAll(InterfaceGeneralDataConfig $config)
 	{
 		$entityRepository = $this->getEntityRepository();
 		$entityManager    = $this->getEntityManager();
@@ -264,7 +263,6 @@ class EntityData implements DriverInterface
 			case '<':
 			case '<=':
 			case 'IN':
-			case 'LIKE':
 				$property = 'e.' . $condition['property'];
 
 				if ($condition['value'] === null) {
@@ -274,19 +272,7 @@ class EntityData implements DriverInterface
 				}
 
 				$parameter = ':parameter' . ($parameterIndex++);
-
-				switch ($condition['operation']) {
-					case '=':
-					case '>':
-					case '>=':
-					case '<':
-					case '<=':
-					case 'IN':
-						$queryBuilder->setParameter($parameter, $condition['value']);
-						break;
-					case 'LIKE':
-						$queryBuilder->setParameter($parameter, str_replace(array('%', '*'), array('%%', '%'), $condition['value']));
-				}
+				$queryBuilder->setParameter($parameter, $condition['value']);
 
 				switch ($condition['operation']) {
 					case '=':
@@ -313,10 +299,6 @@ class EntityData implements DriverInterface
 						return $queryBuilder
 							->expr()
 							->in($property, $parameter);
-					case 'LIKE':
-						return $queryBuilder
-							->expr()
-							->like($property, $parameter);
 				}
 				break;
 
@@ -331,7 +313,7 @@ class EntityData implements DriverInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getCount(ConfigInterface $config)
+	public function getCount(InterfaceGeneralDataConfig $config)
 	{
 		$entityManager = $this->getEntityManager();
 		return $entityManager
@@ -345,7 +327,7 @@ class EntityData implements DriverInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function save(ModelInterface $item, $recursive = false)
+	public function save(InterfaceGeneralModel $item, $recursive = false)
 	{
 		$entityManager = $this->getEntityManager();
 		$entityManager->persist($item->getEntity());
@@ -355,7 +337,7 @@ class EntityData implements DriverInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function saveEach(CollectionInterface $items, $recursive = false)
+	public function saveEach(InterfaceGeneralCollection $items, $recursive = false)
 	{
 		$entityManager = $this->getEntityManager();
 		foreach ($items as $item) {
@@ -389,7 +371,7 @@ class EntityData implements DriverInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function saveVersion(ModelInterface $objModel, $strUsername)
+	public function saveVersion(InterfaceGeneralModel $objModel, $strUsername)
 	{
 		// do nothing, the version manager do this in the flush event state by itself
 	}
@@ -558,7 +540,7 @@ class EntityData implements DriverInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getFilterOptions(ConfigInterface $config)
+	public function getFilterOptions(InterfaceGeneralDataConfig $config)
 	{
 		$properties = $config->getFields();
 		$property   = $properties[0];
@@ -567,24 +549,21 @@ class EntityData implements DriverInterface
 			throw new \Exception('Config must contain exactly one property to be retrieved.');
 		}
 
-		$collection = new DefaultCollection();
+		$entityManager = $this->getEntityManager();
+		$queryBuilder  = $entityManager->createQueryBuilder();
+		$values        = $queryBuilder
+			->select('DISTINCT e.' . $property)
+			->from($this->entityClassName, 'e')
+			->orderBy('e.' . $property)
+			->getQuery()
+			->getResult();
 
-		if ($this->fieldExists($property)) {
-			$entityManager = $this->getEntityManager();
-			$queryBuilder  = $entityManager->createQueryBuilder();
-			$values        = $queryBuilder
-				->select('DISTINCT e.' . $property)
-				->from($this->entityClassName, 'e')
-				->orderBy('e.' . $property)
-				->getQuery()
-				->getResult();
-
-			if ($values) {
-				foreach ($values as $value) {
-					$model = new DefaultModel();
-					$model->setProperty($property, $value[$property]);
-					$collection->add($model);
-				}
+		$collection = new GeneralCollectionDefault();
+		if ($values) {
+			foreach ($values as $value) {
+				$model = new \GeneralModelDefault();
+				$model->setProperty($property, $value[$property]);
+				$collection->add($model);
 			}
 		}
 

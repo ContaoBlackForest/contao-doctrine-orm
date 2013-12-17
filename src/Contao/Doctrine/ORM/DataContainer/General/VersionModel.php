@@ -16,11 +16,10 @@
 namespace Contao\Doctrine\ORM\DataContainer\General;
 
 use Contao\Doctrine\ORM\Entity;
-use DcGeneral\Data\AbstractModel;
 use InterfaceGeneralModel;
 use ORM\Entity\Version;
 
-class VersionModel extends AbstractModel
+class VersionModel extends \AbstractGeneralModel
 {
 	/**
 	 * @var Version
