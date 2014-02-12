@@ -17,11 +17,12 @@ namespace Contao\Doctrine\ORM\DataContainer\General;
 
 use Contao\Doctrine\ORM\Entity;
 use Contao\Doctrine\ORM\EntityHelper;
+use DcGeneral\Data\DefaultModel;
 use Doctrine\Common\Collections\Collection;
 use InterfaceGeneralModel;
 use Psr\Log\LoggerInterface;
 
-class EntityModel extends \AbstractGeneralModel
+class EntityModel extends DefaultModel
 {
 	/**
 	 * @var Entity
@@ -127,6 +128,11 @@ class EntityModel extends \AbstractGeneralModel
 	 */
 	public function setProperty($propertyName, $value)
 	{
+		// ID is not setable in doctrine
+		if ($propertyName == 'id') {
+			return;
+		}
+
 		$entity = $this->getEntity();
 
 		if ($entity) {

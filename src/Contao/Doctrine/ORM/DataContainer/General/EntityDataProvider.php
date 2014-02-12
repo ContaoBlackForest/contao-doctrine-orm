@@ -19,18 +19,19 @@ use Contao\Doctrine\ORM\Entity;
 use Contao\Doctrine\ORM\EntityHelper;
 use Contao\Doctrine\ORM\Mapping\Driver\ContaoDcaDriver;
 use Contao\Doctrine\ORM\VersionManager;
+use DcGeneral\Data\CollectionInterface;
+use DcGeneral\Data\ConfigInterface;
+use DcGeneral\Data\DataProviderInterface;
+use DcGeneral\Data\DefaultCollection;
+use DcGeneral\Data\DefaultConfig;
+use DcGeneral\Data\DefaultModel;
+use DcGeneral\Data\ModelInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
-use GeneralCollectionDefault;
-use GeneralDataConfigDefault;
-use InterfaceGeneralCollection;
-use InterfaceGeneralDataConfig;
-use InterfaceGeneralModel;
-use Module;
 
-class EntityData implements \InterfaceGeneralData
+class EntityDataProvider implements DataProviderInterface
 {
 	/**
 	 * @var string
@@ -82,13 +83,13 @@ class EntityData implements \InterfaceGeneralData
 	/**
 	 * @param Entity[] $entities
 	 *
-	 * @return GeneralCollectionDefault
+	 * @return DefaultCollection
 	 */
 	public function mapEntities($entities)
 	{
-		$collection = new GeneralCollectionDefault();
+		$collection = new DefaultCollection();
 		foreach ($entities as $entity) {
-			$collection->add($this->mapEntity($entity));
+			$collection->push($this->mapEntity($entity));
 		}
 		return $collection;
 	}
@@ -104,21 +105,21 @@ class EntityData implements \InterfaceGeneralData
 	}
 
 	/**
-	 * @param Version[] $versions
+	 * @param VersionModel[] $versions
 	 *
-	 * @return GeneralCollectionDefault
+	 * @return DefaultCollection
 	 */
 	public function mapVersions($versions, $activeVersion = false)
 	{
-		$collection = new GeneralCollectionDefault();
+		$collection = new DefaultCollection();
 		foreach ($versions as $version) {
-			$collection->add($this->mapVersion($version, $activeVersion));
+			$collection->push($this->mapVersion($version, $activeVersion));
 		}
 		return $collection;
 	}
 
 	/**
-	 * @param Version $version
+	 * @param VersionModel $version
 	 *
 	 * @return VersionModel
 	 */
@@ -150,7 +151,7 @@ class EntityData implements \InterfaceGeneralData
 	 */
 	public function getEmptyConfig()
 	{
-		return GeneralDataConfigDefault::init();
+		return DefaultConfig::init();
 	}
 
 	/**
@@ -166,13 +167,13 @@ class EntityData implements \InterfaceGeneralData
 	 */
 	public function getEmptyCollection()
 	{
-		return new GeneralCollectionDefault();
+		return new DefaultCollection();
 	}
 
 	/**
 	 * {@inheritdoc}
 	 */
-	public function fetch(InterfaceGeneralDataConfig $config)
+	public function fetch(ConfigInterface $config)
 	{
 		if ($config->getId()) {
 			$repository = $this->getEntityRepository();
@@ -187,7 +188,7 @@ class EntityData implements \InterfaceGeneralData
 	/**
 	 * {@inheritdoc}
 	 */
-	public function fetchAll(InterfaceGeneralDataConfig $config)
+	public function fetchAll(ConfigInterface $config)
 	{
 		$entityRepository = $this->getEntityRepository();
 		$entityManager    = $this->getEntityManager();
@@ -313,7 +314,7 @@ class EntityData implements \InterfaceGeneralData
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getCount(InterfaceGeneralDataConfig $config)
+	public function getCount(ConfigInterface $config)
 	{
 		$entityManager = $this->getEntityManager();
 		return $entityManager
@@ -327,8 +328,12 @@ class EntityData implements \InterfaceGeneralData
 	/**
 	 * {@inheritdoc}
 	 */
-	public function save(InterfaceGeneralModel $item, $recursive = false)
+	public function save(ModelInterface $item, $recursive = false)
 	{
+		if (!$item instanceof EntityModel) {
+			throw new \RuntimeException('The EntityDataProvider only support EntityModel\'s');
+		}
+
 		$entityManager = $this->getEntityManager();
 		$entityManager->persist($item->getEntity());
 		$entityManager->flush();
@@ -337,10 +342,14 @@ class EntityData implements \InterfaceGeneralData
 	/**
 	 * {@inheritdoc}
 	 */
-	public function saveEach(InterfaceGeneralCollection $items, $recursive = false)
+	public function saveEach(CollectionInterface $items, $recursive = false)
 	{
 		$entityManager = $this->getEntityManager();
 		foreach ($items as $item) {
+			if (!$item instanceof EntityModel) {
+				throw new \RuntimeException('The EntityDataProvider only support EntityModel\'s');
+			}
+
 			$entityManager->persist($item->getEntity());
 		}
 		$entityManager->flush();
@@ -371,7 +380,7 @@ class EntityData implements \InterfaceGeneralData
 	/**
 	 * {@inheritdoc}
 	 */
-	public function saveVersion(InterfaceGeneralModel $objModel, $strUsername)
+	public function saveVersion(ModelInterface $objModel, $strUsername)
 	{
 		// do nothing, the version manager do this in the flush event state by itself
 	}
@@ -540,7 +549,7 @@ class EntityData implements \InterfaceGeneralData
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getFilterOptions(InterfaceGeneralDataConfig $config)
+	public function getFilterOptions(ConfigInterface $config)
 	{
 		$properties = $config->getFields();
 		$property   = $properties[0];
@@ -558,12 +567,12 @@ class EntityData implements \InterfaceGeneralData
 			->getQuery()
 			->getResult();
 
-		$collection = new GeneralCollectionDefault();
+		$collection = new DefaultCollection();
 		if ($values) {
 			foreach ($values as $value) {
-				$model = new \GeneralModelDefault();
+				$model = new DefaultModel();
 				$model->setProperty($property, $value[$property]);
-				$collection->add($model);
+				$collection->push($model);
 			}
 		}
 
