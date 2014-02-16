@@ -15,7 +15,7 @@
 
 /** @var Pimple $container */
 
-$container['doctrine.orm.entitiyGeneratorFactory'] = $container->protect(
+$container['doctrine.orm.entityGeneratorFactory'] = $container->protect(
 	function ($regenerate = false) {
 		$entityGenerator = new \Contao\Doctrine\ORM\Install\EntityGenerator();
 		$entityGenerator->setGenerateStubMethods(true);
@@ -137,6 +137,12 @@ $container['doctrine.orm.entitySerializer'] = $container->share(
 			$container['doctrine.orm.entitySerializer.normalizers']->getArrayCopy(),
 			$container['doctrine.orm.entitySerializer.encoders']->getArrayCopy()
 		);
+	}
+);
+
+$container['doctrine.orm.entityAccessor'] = $container->share(
+	function ($container) {
+		return new \Contao\Doctrine\ORM\EntityAccessor();
 	}
 );
 

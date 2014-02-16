@@ -15,7 +15,8 @@
 
 namespace Contao\Doctrine\ORM\Serializer;
 
-use Contao\Doctrine\ORM\Entity;
+use Contao\Doctrine\ORM\EntityAccessor;
+use Contao\Doctrine\ORM\EntityInterface;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
@@ -29,10 +30,13 @@ class EntityNormalizer extends SerializerAwareNormalizer implements NormalizerIn
 	 */
 	public function normalize($object, $format = null, array $context = array())
 	{
-		$attributes = $object->toArray(true);
+		/** @var EntityAccessor $entityAccessor */
+		$entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+
+		$attributes = $entityAccessor->getRawProperties($object);
 
 		foreach ($attributes as $key => $value) {
-			if ($value instanceof Entity || $value instanceof Collection) {
+			if ($value instanceof EntityInterface || $value instanceof Collection) {
 				// skip references
 			}
 			else if (null !== $value && !is_scalar($value)) {
@@ -66,11 +70,13 @@ class EntityNormalizer extends SerializerAwareNormalizer implements NormalizerIn
 
 				$setter->invoke($entity, $value);
 			}
+
 			else if ($reflectionClass->hasProperty($key)) {
 				$property = $reflectionClass->getProperty($key);
 				$property->setAccessible(true);
 				$property->setValue($entity, $value);
 			}
+
 			// otherwise ignore, we expect that a previous field does not exists anymore
 		}
 
@@ -82,7 +88,7 @@ class EntityNormalizer extends SerializerAwareNormalizer implements NormalizerIn
 	 */
 	public function supportsNormalization($data, $format = null)
 	{
-		return $data instanceof Entity;
+		return $data instanceof EntityInterface;
 	}
 
 	/**
@@ -92,7 +98,7 @@ class EntityNormalizer extends SerializerAwareNormalizer implements NormalizerIn
 	{
 		try {
 			$class = new \ReflectionClass($type);
-			return $class->isSubclassOf('Contao\Doctrine\ORM\Entity');
+			return $class->isSubclassOf('Contao\Doctrine\ORM\EntityInterface');
 		}
 		catch (\ReflectionException $e) {
 			return false;

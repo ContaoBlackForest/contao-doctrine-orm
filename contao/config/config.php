@@ -72,16 +72,11 @@ $GLOBALS['DOCTRINE_TYPE_MAP']['timePeriod']         = array('nullable' => true, 
 
 
 /**
- * Entity parent class
- */
-$GLOBALS['DOCTRINE_ENTITY_CLASS'][''] = 'Contao\Doctrine\ORM\Entity';
-
-
-/**
  * Entities
  */
 $GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS']['ORM']       = 'ORM\Entity';
 $GLOBALS['DOCTRINE_ENTITY_NAMESPACE_MAP']['orm_version'] = 'ORM\Entity\Version';
+$GLOBALS['DOCTRINE_ENTITY_CLASS']['ORM\Entity\Version']  = 'Contao\Doctrine\ORM\Entity\AbstractVersion';
 $GLOBALS['DOCTRINE_ENTITIES'][]                          = 'orm_version';
 
 

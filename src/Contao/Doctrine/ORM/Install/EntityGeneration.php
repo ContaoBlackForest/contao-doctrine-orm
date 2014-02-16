@@ -71,7 +71,7 @@ class EntityGeneration
 
 			// Create EntityGenerator
 			/** @var EntityGenerator $entityGenerator */
-			$entityGenerator = $container['doctrine.orm.entitiyGeneratorFactory'](true);
+			$entityGenerator = $container['doctrine.orm.entityGeneratorFactory'](true);
 
 			foreach ($metadatas as $metadata) {
 				static::generateEntity($metadata, $entitiesCacheDir, $entityGenerator, $output);
@@ -80,7 +80,7 @@ class EntityGeneration
 
 			if ($output) {
 				$output->write(
-					PHP_EOL . sprintf('Entity classes generated to "<info>%s</info>"', $entitiesCacheDir) . PHP_EOL
+					   PHP_EOL . sprintf('Entity classes generated to "<info>%s</info>"', $entitiesCacheDir) . PHP_EOL
 				);
 			}
 			$logger->info(sprintf('Entity classes generated to "%s"', $entitiesCacheDir));
@@ -95,7 +95,7 @@ class EntityGeneration
 
 			if ($output) {
 				$output->write(
-					PHP_EOL . sprintf('Entity proxies generated to "<info>%s</info>"', $proxiesCacheDir) . PHP_EOL
+					   PHP_EOL . sprintf('Entity proxies generated to "<info>%s</info>"', $proxiesCacheDir) . PHP_EOL
 				);
 			}
 			$logger->info(sprintf('Entity proxies generated to "%s"', $proxiesCacheDir));
@@ -105,26 +105,26 @@ class EntityGeneration
 				if ($metadata->customRepositoryClassName) {
 					if ($output) {
 						$output->write(
-							sprintf(
-								'Processing repository "<info>%s</info>"',
-								$metadata->customRepositoryClassName
-							) . PHP_EOL
+							   sprintf(
+								   'Processing repository "<info>%s</info>"',
+								   $metadata->customRepositoryClassName
+							   ) . PHP_EOL
 						);
 					}
 
 					$repositoryGenerator->writeEntityRepositoryClass(
-						$metadata->customRepositoryClassName,
-						$repositoriesCacheDir
+										$metadata->customRepositoryClassName,
+											$repositoriesCacheDir
 					);
 				}
 			}
 
 			if ($output) {
 				$output->write(
-					PHP_EOL . sprintf(
-						'Entity repositories generated to "<info>%s</info>"',
-						$repositoriesCacheDir
-					) . PHP_EOL
+					   PHP_EOL . sprintf(
+						   'Entity repositories generated to "<info>%s</info>"',
+						   $repositoriesCacheDir
+					   ) . PHP_EOL
 				);
 			}
 			$logger->info(sprintf('Entity repositories generated to "%s"', $repositoriesCacheDir));
@@ -155,19 +155,21 @@ class EntityGeneration
 		}
 
 		if (!$entityGenerator) {
-			$entityGenerator = $container['doctrine.orm.entitiyGeneratorFactory'](
+			$entityGenerator = $container['doctrine.orm.entityGeneratorFactory'](
 				$GLOBALS['TL_CONFIG']['debugMode'] || $GLOBALS['TL_CONFIG']['doctrineDevMode']
 			);
 		}
 
 		if ($output) {
 			$output->write(
-				sprintf('Processing entity "<info>%s</info>"', $metadata->name) . PHP_EOL
+				   sprintf('Processing entity "<info>%s</info>"', $metadata->name) . PHP_EOL
 			);
 		}
 
+		$entityGenerator->setClassToExtend(false);
+
 		$classPath = explode('\\', $metadata->getName());
-		while (true) {
+		while (count($classPath)) {
 			$className = implode('\\', $classPath);
 
 			if (isset($GLOBALS['DOCTRINE_ENTITY_CLASS'][$className])) {

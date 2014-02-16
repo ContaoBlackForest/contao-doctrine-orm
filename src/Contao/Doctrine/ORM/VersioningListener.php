@@ -15,12 +15,8 @@
 
 namespace Contao\Doctrine\ORM;
 
-use Contao\Doctrine\ORM\Entity;
-use Doctrine\Common\EventArgs;
 use Doctrine\Common\EventSubscriber;
-use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\OnFlushEventArgs;
-use Doctrine\ORM\Events;
 use ORM\Entity\Version;
 use Symfony\Component\Serializer\Serializer;
 
@@ -71,12 +67,15 @@ class VersioningListener implements EventSubscriber
 	protected function createVersion($action, $entity, OnFlushEventArgs $args)
 	{
 		$entityManager = $args->getEntityManager();
-		if ($entity instanceof Entity && !$entity instanceof Version) {
+		if ($entity instanceof EntityInterface && !$entity instanceof Version) {
 			$changeSet = $entityManager
 				->getUnitOfWork()
 				->getEntityChangeSet($entity);
 
-			$originalData = $entity->toArray();
+			/** @var EntityAccessor $entityAccessor */
+			$entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+
+			$originalData = $entityAccessor->getRawProperties($entity);
 			// restore original values
 			foreach ($changeSet as $field => $change) {
 				$originalData[$field] = $change[0];
@@ -93,8 +92,8 @@ class VersioningListener implements EventSubscriber
 
 			$version = new Version();
 			$version->setEntityClass(Helper::createShortenEntityName($entity));
-			$version->setEntityId($entity->id());
-			$version->setEntityHash(VersionManager::calculateHash($entity->toArray()));
+			$version->setEntityId($entityAccessor->getPrimaryKey($entity));
+			$version->setEntityHash(VersionManager::calculateHash($entity));
 			$version->setAction($action);
 			$version->setPrevious($previousVersion ? $previousVersion->getId() : null);
 			$version->setData($serializer->serialize($entity, 'json'));

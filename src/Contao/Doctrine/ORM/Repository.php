@@ -29,8 +29,8 @@ class Repository extends EntityRepository
 		if (is_scalar($id)) {
 			$className      = $this->getClassName();
 			$class          = new \ReflectionClass($className);
-			$keySeparator   = $class->getConstant('KEY_SEPARATOR');
-			$keyDeclaration = $class->getConstant('KEY');
+			$keySeparator   = '|';
+			$keyDeclaration = $class->hasConstant('PRIMARY_KEY') ? $class->getConstant('PRIMARY_KEY') : 'id';
 			$keys           = explode(',', $keyDeclaration);
 			if (count($keys) > 1) {
 				$ids = explode($keySeparator, $id);

@@ -44,7 +44,7 @@ class EntityHelper
 	 * @param \ReflectionClass|string $class
 	 * @param string                  $combinedId
 	 *
-	 * @return Entity|null
+	 * @return EntityInterface|null
 	 */
 	static public function parseCombinedId($class, $combinedId)
 	{
@@ -60,8 +60,8 @@ class EntityHelper
 			$class = new \ReflectionClass($class);
 		}
 
-		$keySeparator   = $class->getConstant('KEY_SEPARATOR');
-		$keyDeclaration = $class->getConstant('KEY');
+		$keySeparator   = '|';
+		$keyDeclaration = $class->hasConstant('PRIMARY_KEY') ? $class->getConstant('PRIMARY_KEY') : 'id';
 		$keys           = explode(',', $keyDeclaration);
 		$ids            = explode($keySeparator, $combinedId);
 		$criteria       = array_combine($keys, $ids);
@@ -75,7 +75,7 @@ class EntityHelper
 	 * @param \ReflectionClass|string $class
 	 * @param string                  $combinedId
 	 *
-	 * @return Entity|null
+	 * @return EntityInterface|null
 	 */
 	static public function findByCombinedId($class, $combinedId)
 	{
@@ -85,5 +85,43 @@ class EntityHelper
 		$entity     = $repository->findOneBy($criteria);
 
 		return $entity;
+	}
+
+	/**
+	 * Call load callbacks
+	 *
+	 * @param string $field
+	 * @param mixed  $value
+	 *
+	 * @return mixed
+	 */
+	static public function callGetterCallbacks($entity, $table, $field, $value)
+	{
+		if (isset($GLOBALS['TL_DCA'][$table]['fields'][$field]['getter_callback'])) {
+			$callbacks = (array) $GLOBALS['TL_DCA'][$table]['fields'][$field]['getter_callback'];
+			foreach ($callbacks as $callback) {
+				$value = call_user_func($callback, $value, $entity);
+			}
+		}
+		return $value;
+	}
+
+	/**
+	 * Call save callbacks
+	 *
+	 * @param string $field
+	 * @param mixed  $value
+	 *
+	 * @return mixed
+	 */
+	static public function callSetterCallbacks($entity, $table, $field, $value)
+	{
+		if (isset($GLOBALS['TL_DCA'][$table]['fields'][$field]['setter_callback'])) {
+			$callbacks = (array) $GLOBALS['TL_DCA'][$table]['fields'][$field]['setter_callback'];
+			foreach ($callbacks as $callback) {
+				$value = call_user_func($callback, $value, $entity);
+			}
+		}
+		return $value;
 	}
 }

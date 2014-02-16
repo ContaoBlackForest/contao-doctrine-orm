@@ -15,13 +15,7 @@
 
 namespace Contao\Doctrine\ORM;
 
-use Contao\Doctrine\ORM\Entity;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\Common\EventArgs;
-use Doctrine\Common\EventSubscriber;
-use Doctrine\ORM\Event\LifecycleEventArgs;
-use Doctrine\ORM\Event\OnFlushEventArgs;
-use Doctrine\ORM\Events;
 use ORM\Entity\Version;
 use Symfony\Component\Serializer\Serializer;
 
@@ -30,15 +24,18 @@ class VersionManager
 	/**
 	 * Calculate a hash from an entity to identify a version.
 	 *
-	 * @param Entity|array $entity
+	 * @param EntityInterface|array $entity
 	 *
 	 * @return string
 	 * @throws \RuntimeException
 	 */
 	static public function calculateHash($entity)
 	{
-		if ($entity instanceof Entity) {
-			$entityData = $entity->toArray();
+		if ($entity instanceof EntityInterface) {
+			/** @var EntityAccessor $entityAccessor */
+			$entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+
+			$entityData = $entityAccessor->getRawProperties($entity);
 			ksort($entityData);
 		}
 		else if (is_array($entity)) {
@@ -65,7 +62,7 @@ class VersionManager
 			else if ($value instanceof \DateTime) {
 				$hash[] = $value->getTimestamp();
 			}
-			else if ($value instanceof Entity || $value instanceof Collection) {
+			else if ($value instanceof EntityInterface || $value instanceof Collection) {
 				// ignore references
 			}
 			else {
@@ -85,12 +82,15 @@ class VersionManager
 		return $versionRepository->find($versionId);
 	}
 
-	public function findVersion(Entity $entity, $entityData = null)
+	public function findVersion(EntityInterface $entity, $entityData = null)
 	{
+		/** @var EntityAccessor $entityAccessor */
+		$entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+
 		$versionRepository = EntityHelper::getRepository('ORM:Version');
 
 		$entityClassName = Helper::createShortenEntityName($entity);
-		$entityId        = $entity->id();
+		$entityId        = $entityAccessor->getPrimaryKey($entity);
 		$entityHash      = static::calculateHash($entityData ? : $entity);
 
 		return $versionRepository->findOneBy(
@@ -103,12 +103,15 @@ class VersionManager
 		);
 	}
 
-	public function findVersions(Entity $entity)
+	public function findVersions(EntityInterface $entity)
 	{
+		/** @var EntityAccessor $entityAccessor */
+		$entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+
 		$versionRepository = EntityHelper::getRepository('ORM:Version');
 
 		$entityClassName = Helper::createShortenEntityName($entity);
-		$entityId        = $entity->id();
+		$entityId        = $entityAccessor->getPrimaryKey($entity);
 
 		return $versionRepository->findBy(
 			array(
@@ -136,10 +139,10 @@ class VersionManager
 
 		$entityRepository = EntityHelper::getRepository($version->getEntityClass());
 
-		/** @var Entity $entity */
+		/** @var EntityInterface $entity */
 		$entity = $entityRepository->find($version->getEntityId());
 
-		/** @var Entity $entity */
+		/** @var EntityInterface $entity */
 		$previousEntity = $serializer->deserialize(
 			$version->getData(),
 			$entityRepository->getClassName(),
@@ -151,7 +154,7 @@ class VersionManager
 
 		foreach ($sourceClass->getProperties() as $sourceProperty) {
 			$sourceValue = $sourceProperty->getValue($entity);
-			if ($sourceValue instanceof Entity || $sourceValue instanceof Collection) {
+			if ($sourceValue instanceof EntityInterface || $sourceValue instanceof Collection) {
 				// skip references
 			}
 			else {

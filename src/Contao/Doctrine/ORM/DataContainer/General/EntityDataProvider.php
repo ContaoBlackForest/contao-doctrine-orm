@@ -15,8 +15,9 @@
 
 namespace Contao\Doctrine\ORM\DataContainer\General;
 
-use Contao\Doctrine\ORM\Entity;
+use Contao\Doctrine\ORM\EntityAccessor;
 use Contao\Doctrine\ORM\EntityHelper;
+use Contao\Doctrine\ORM\EntityInterface;
 use Contao\Doctrine\ORM\Mapping\Driver\ContaoDcaDriver;
 use Contao\Doctrine\ORM\VersionManager;
 use DcGeneral\Data\CollectionInterface;
@@ -59,6 +60,11 @@ class EntityDataProvider implements DataProviderInterface
 	protected $entityRepository;
 
 	/**
+	 * @var EntityAccessor
+	 */
+	protected $entityAccessor;
+
+	/**
 	 * @return EntityManager
 	 */
 	public function getEntityManager()
@@ -81,7 +87,24 @@ class EntityDataProvider implements DataProviderInterface
 	}
 
 	/**
-	 * @param Entity[] $entities
+	 * @param \Contao\Doctrine\ORM\EntityAccessor $entityAccessor
+	 */
+	public function setEntityAccessor($entityAccessor)
+	{
+		$this->entityAccessor = $entityAccessor;
+		return $this;
+	}
+
+	/**
+	 * @return \Contao\Doctrine\ORM\EntityAccessor
+	 */
+	public function getEntityAccessor()
+	{
+		return $this->entityAccessor;
+	}
+
+	/**
+	 * @param EntityInterface[] $entities
 	 *
 	 * @return DefaultCollection
 	 */
@@ -95,7 +118,7 @@ class EntityDataProvider implements DataProviderInterface
 	}
 
 	/**
-	 * @param Entity $entity
+	 * @param EntityInterface $entity
 	 *
 	 * @return EntityModel
 	 */
@@ -133,17 +156,20 @@ class EntityDataProvider implements DataProviderInterface
 	 */
 	public function setBaseConfig(array $config)
 	{
+		global $container;
+
 		// Check configuration.
 		if (!isset($config["source"])) {
 			throw new \Exception("Missing entity table name.");
 		}
 
 		// fetch entity manager to register entity class loader
-		$GLOBALS['container']['doctrine.orm.entityManager'];
+		$container['doctrine.orm.entityManager'];
 
 		$this->tableName       = $config['source'];
 		$this->entityClassName = ContaoDcaDriver::tableToClassName($this->tableName);
 		$this->entityClass     = new \ReflectionClass($this->entityClassName);
+		$this->entityAccessor  = $container['doctrine.orm.entityAccessor'];
 	}
 
 	/**
@@ -305,9 +331,9 @@ class EntityDataProvider implements DataProviderInterface
 
 			default:
 				throw new \Exception('Error processing filter array - unknown operation ' . var_export(
-					$condition,
-					true
-				), 1);
+						$condition,
+						true
+					), 1);
 		}
 	}
 
@@ -360,6 +386,10 @@ class EntityDataProvider implements DataProviderInterface
 	 */
 	public function delete($item)
 	{
+		if (!$item instanceof EntityModel) {
+			throw new \RuntimeException('The EntityDataProvider only support EntityModel\'s');
+		}
+
 		$entityManager = $this->getEntityManager();
 
 		if ($item instanceof EntityModel) {
@@ -416,8 +446,8 @@ class EntityDataProvider implements DataProviderInterface
 			$entityRepository = $this->getEntityRepository();
 			$entity           = $entityRepository->find($mixID);
 			if ($entity) {
-				$version          = $this->getActiveVersion($entity);
-				$versions         = $versionManager->findVersions($entity);
+				$version  = $this->getActiveVersion($entity);
+				$versions = $versionManager->findVersions($entity);
 
 				return $this->mapVersions($versions, $version);
 			}
@@ -450,10 +480,11 @@ class EntityDataProvider implements DataProviderInterface
 				$entityRepository = $this->getEntityRepository();
 				$entity           = $entityRepository->find($mixID);
 			}
-			$version          = $versionManager->findVersion($entity);
+			$version = $versionManager->findVersion($entity);
 
 			if ($version) {
-				return $version->id();
+				$entityAccessor = $this->getEntityAccessor();
+				return $entityAccessor->getPrimaryKey($version);
 			}
 		}
 		return null;
@@ -478,13 +509,19 @@ class EntityDataProvider implements DataProviderInterface
 	 */
 	public function isUniqueValue($field, $value, $id = null)
 	{
-		$keys     = explode(',', $this->entityClass->getConstant('KEY'));
-		$idValues = explode($this->entityClass->getConstant('KEY_SEPARATOR'), $id);
+		if ($this->entityClass->hasConstant('PRIMARY_KEY')) {
+			$keys = explode(',', $this->entityClass->getConstant('PRIMARY_KEY'));
+		}
+		else {
+			$keys = array('id');
+		}
+
+		$idValues = explode('|', $id);
 
 		if (count($keys) != count($idValues)) {
 			throw new \RuntimeException('Key count of ' . count($keys) . ' does not match id values count ' . count(
-				$idValues
-			));
+					$idValues
+				));
 		}
 
 		$entityManager = $this->getEntityManager();
@@ -528,12 +565,8 @@ class EntityDataProvider implements DataProviderInterface
 			$objModel2 instanceof EntityModel &&
 			get_class($objModel1->getEntity()) == get_class($objModel2->getEntity())
 		) {
-			$data1 = $objModel1
-				->getEntity()
-				->toArray();
-			$data2 = $objModel2
-				->getEntity()
-				->toArray();
+			$data1 = $this->entityAccessor->getRawProperties($objModel1);
+			$data2 = $this->entityAccessor->getRawProperties($objModel2);
 
 			foreach ($data1 as $key => $value) {
 				if ($data2[$key] != $value) {

@@ -15,61 +15,27 @@
 
 namespace Contao\Doctrine\ORM\DataContainer\General;
 
-use Contao\Doctrine\ORM\Entity;
+use Contao\Doctrine\ORM\EntityAccessor;
+use Contao\Doctrine\ORM\EntityInterface;
 use DcGeneral\Data\DefaultModel;
-use InterfaceGeneralModel;
 use ORM\Entity\Version;
 
-class VersionModel extends DefaultModel
+class VersionModel extends EntityModel
 {
-	/**
-	 * @var Version
-	 */
-	protected $version;
-
 	protected $active;
 
-	function __construct($version, $active)
+	function __construct(Version $versionEntity, $active)
 	{
-		$this->version = $version;
-		$this->active  = $active;
+		parent::__construct($versionEntity);
+		$this->active = $active;
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * @return EntityInterface|Version
 	 */
-	public function __clone()
+	public function getEntity()
 	{
-	}
-
-	/**
-	 * @return Version
-	 */
-	public function getVersion()
-	{
-		return $this->version;
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getID()
-	{
-		$version = $this->getVersion();
-
-		if ($version) {
-			return $version->id();
-		}
-
-		return null;
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function setID($mixID)
-	{
-		// unsupported for versions
+		return parent::getEntity();
 	}
 
 	/**
@@ -77,80 +43,49 @@ class VersionModel extends DefaultModel
 	 */
 	public function getProperty($strPropertyName)
 	{
-		$version = $this->getVersion();
+		switch ($strPropertyName) {
+			case 'version':
+				return $this->getVersion();
 
-		if ($version) {
-			switch ($strPropertyName) {
-				case 'version':
-					return $version->getId();
+			case 'active':
+				return $this->isCurrent();
 
-				case 'active':
-					return $this->active;
+			case 'tstamp':
+				return $this->getDateTime();
 
-				case 'tstamp':
-					return $version->getCreatedAt()->getTimestamp();
-
-				case 'username':
-					return $version->getUsername();
-			}
-			return $version->$strPropertyName;
+			case 'username':
+				return $this->getAuthorName();
 		}
 
-		return null;
+		return parent::getProperty($strPropertyName);
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function setProperty($strPropertyName, $varValue)
+	public function getVersion()
 	{
-		// unsupported for versions
+		$entity = $this->getEntity();
+		return $entity->getId();
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getPropertiesAsArray()
+	public function getDateTime()
 	{
-		$version = $this->getVersion();
-
-		if ($version) {
-			return $version->toArray();
-		}
-
-		return array();
+		$entity = $this->getEntity();
+		return $entity->getCreatedAt();
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function setPropertiesAsArray($arrProperties)
+	public function isCurrent()
 	{
-		// unsupported for versions
+		return $this->active;
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function hasProperties()
+	public function getAuthorName()
 	{
-		return (bool) $this->getVersion();
+		$entity = $this->getEntity();
+		return $entity->getUsername();
 	}
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getProviderName()
+	public function getAuthorUsername()
 	{
-		$version = $this->getVersion();
-		return $version::TABLE_NAME;
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getIterator()
-	{
-		return new \ArrayIterator($this->getVersion()->toArray());
+		$entity = $this->getEntity();
+		return $entity->getUsername();
 	}
 }

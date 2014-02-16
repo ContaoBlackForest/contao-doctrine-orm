@@ -15,7 +15,6 @@
 
 namespace Contao\Doctrine\ORM\Serializer;
 
-use Contao\Doctrine\ORM\Entity;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\scalar;

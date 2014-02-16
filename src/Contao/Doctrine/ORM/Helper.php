@@ -15,8 +15,6 @@
 
 namespace Contao\Doctrine\ORM;
 
-use Contao\Doctrine\ORM\Entity;
-use Contao\Doctrine\ORM\EntityHelper;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 
@@ -27,7 +25,7 @@ class Helper
 	 *
 	 * @param QueryBuilder     $queryBuilder
 	 * @param mixed            $id
-	 * @param Entity           $entity
+	 * @param EntityInterface  $entity
 	 * @param bool             $standalone
 	 * @param \ReflectionClass $entityClass
 	 *
@@ -35,18 +33,26 @@ class Helper
 	 */
 	static public function extendQueryWhereId(
 		QueryBuilder $queryBuilder,
-		Entity $entity,
+		EntityInterface $entity,
 		$standalone = false,
 		\ReflectionClass $entityClass = null
 	) {
+		/** @var EntityAccessor $entityAccessor */
+		$entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+
 		if (!$entityClass) {
 			$entityClass = new \ReflectionClass($entity);
 		}
 
-		$keys = explode(',', $entityClass->getConstant('KEY'));
+		if ($entityClass->hasConstant('PRIMARY_KEY')) {
+			$keys = explode(',', $entityClass->getConstant('PRIMARY_KEY'));
+		}
+		else {
+			$keys = array('id');
+		}
 
 		foreach ($keys as $index => $key) {
-			$value = $entity->__get($key);
+			$value = $entityAccessor->getProperty($entity, $key);
 
 			if ($value !== null) {
 				$where = $queryBuilder
@@ -72,27 +78,30 @@ class Helper
 	/**
 	 * Auto-Generate an alias for an entity.
 	 *
-	 * @param string $alias
-	 * @param Entity $entity
+	 * @param string          $alias
+	 * @param EntityInterface $entity
 	 *
 	 * @return string
-	 * @throws Exception
+	 * @throws \Exception
 	 */
-	static public function generateAlias($alias, Entity $entity, $baseField = false)
+	static public function generateAlias($alias, $entity, $baseField = false)
 	{
 		// Generate alias if there is none
 		if (!strlen($alias)) {
+			/** @var EntityAccessor $entityAccessor */
+			$entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+
 			if ($baseField) {
-				$alias = standardize($entity->__get($baseField));
+				$alias = standardize($entityAccessor->getProperty($entity, $baseField));
 			}
 			else if ($entity instanceof AliasableInterface) {
 				$alias = standardize($entity->getAliasParentValue());
 			}
-			else if ($entity->__has('title')) {
-				$alias = standardize($entity->getTitle());
+			else if ($entityAccessor->hasProperty($entity, 'title')) {
+				$alias = standardize($entityAccessor->getProperty($entity, 'title'));
 			}
-			else if ($entity->__has('name')) {
-				$alias = standardize($entity->getName());
+			else if ($entityAccessor->hasProperty($entity, 'name')) {
+				$alias = standardize($entityAccessor->getProperty($entity, 'name'));
 			}
 			else {
 				throw new \RuntimeException('Cannot generate alias, do not know which field should used!');
@@ -100,7 +109,13 @@ class Helper
 		}
 
 		$entityClass = new \ReflectionClass($entity);
-		$keys        = explode(',', $entityClass->getConstant('KEY'));
+
+		if ($entityClass->hasConstant('PRIMARY_KEY')) {
+			$keys = explode(',', $entityClass->getConstant('PRIMARY_KEY'));
+		}
+		else {
+			$keys = array('id');
+		}
 
 		$entityManager = EntityHelper::getEntityManager();
 		$queryBuilder  = $entityManager->createQueryBuilder();

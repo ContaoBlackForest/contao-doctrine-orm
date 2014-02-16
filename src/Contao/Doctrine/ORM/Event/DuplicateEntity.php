@@ -15,15 +15,13 @@
 
 namespace Contao\Doctrine\ORM\Event;
 
-use Contao\Doctrine\ORM\Entity;
+use Contao\Doctrine\ORM\EntityInterface;
 use Symfony\Component\EventDispatcher\Event;
 
 class DuplicateEntity extends Event
 {
-	const EVENT_NAME = 'contao-orm-entity-duplicate';
-
 	/**
-	 * @var Entity
+	 * @var EntityInterface
 	 */
 	protected $entity;
 
@@ -33,17 +31,17 @@ class DuplicateEntity extends Event
 	protected $withoutKeys;
 
 	/**
-	 * @param Entity $entity
-	 * @param bool   $withoutKeys
+	 * @param EntityInterface $entity
+	 * @param bool            $withoutKeys
 	 */
-	function __construct(Entity $entity, $withoutKeys)
+	function __construct($entity, $withoutKeys)
 	{
 		$this->entity      = $entity;
 		$this->withoutKeys = (bool) $withoutKeys;
 	}
 
 	/**
-	 * @return Entity
+	 * @return EntityInterface
 	 */
 	public function getEntity()
 	{

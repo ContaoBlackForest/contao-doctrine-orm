@@ -15,37 +15,39 @@
 
 namespace Contao\Doctrine\ORM\DataContainer\General;
 
-use Contao\Doctrine\ORM\Entity;
-use Contao\Doctrine\ORM\EntityHelper;
-use DcGeneral\Data\DefaultModel;
-use Doctrine\Common\Collections\Collection;
-use InterfaceGeneralModel;
-use Psr\Log\LoggerInterface;
+use Contao\Doctrine\ORM\EntityAccessor;
+use Contao\Doctrine\ORM\EntityInterface;
+use DcGeneral\Data\AbstractModel;
+use DcGeneral\Data\PropertyValueBagInterface;
+use DcGeneral\Exception\DcGeneralInvalidArgumentException;
 
-class EntityModel extends DefaultModel
+class EntityModel extends AbstractModel
 {
 	/**
-	 * @var Entity
+	 * @var EntityInterface
 	 */
 	protected $entity;
 
+	/**
+	 * @var \ReflectionClass
+	 */
 	protected $reflectionClass;
 
+	/**
+	 * @var EntityAccessor
+	 */
+	protected $entityAccessor;
+
+	/**
+	 * @param object $entity
+	 */
 	function __construct($entity)
 	{
 		$this->entity = $entity;
 	}
 
 	/**
-	 * {@inheritdoc}
-	 */
-	public function __clone()
-	{
-		$this->entity = $this->entity->duplicate(true);
-	}
-
-	/**
-	 * @return Entity
+	 * @return EntityInterface
 	 */
 	public function getEntity()
 	{
@@ -64,6 +66,26 @@ class EntityModel extends DefaultModel
 	}
 
 	/**
+	 * @param \Contao\Doctrine\ORM\EntityAccessor $entityAccessor
+	 */
+	public function setEntityAccessor($entityAccessor)
+	{
+		$this->entityAccessor = $entityAccessor;
+		return $this;
+	}
+
+	/**
+	 * @return \Contao\Doctrine\ORM\EntityAccessor
+	 */
+	public function getEntityAccessor()
+	{
+		if (!$this->entityAccessor) {
+			$this->entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+		}
+		return $this->entityAccessor;
+	}
+
+	/**
 	 * {@inheritdoc}
 	 */
 	public function getID()
@@ -71,7 +93,8 @@ class EntityModel extends DefaultModel
 		$entity = $this->getEntity();
 
 		if ($entity) {
-			return $entity->id();
+			$entityAccessor = $this->getEntityAccessor();
+			return $entityAccessor->getPrimaryKey($entity);
 		}
 
 		return null;
@@ -85,7 +108,8 @@ class EntityModel extends DefaultModel
 		$entity = $this->getEntity();
 
 		if ($entity) {
-			$entity->id($id);
+			$entityAccessor = $this->getEntityAccessor();
+			$entityAccessor->setPrimaryKey($entity, $id);
 		}
 	}
 
@@ -97,27 +121,8 @@ class EntityModel extends DefaultModel
 		$entity = $this->getEntity();
 
 		if ($entity) {
-			try {
-				$value = $entity->$propertyName;
-
-				if ($value instanceof Entity) {
-					$value = $value->id();
-				}
-				else if ($value instanceof Collection) {
-					$ids = array();
-					foreach ($value as $item) {
-						$ids[] = $item->id();
-					}
-					$value = $ids;
-				}
-
-				return $value;
-			}
-			catch (\InvalidArgumentException $e) {
-				/** @var LoggerInterface $logger */
-				$logger = $GLOBALS['container']['doctrine.orm.logger'];
-				$logger->warning($e->getMessage());
-			}
+			$entityAccessor = $this->getEntityAccessor();
+			return $entityAccessor->getProperty($entity, $propertyName);
 		}
 
 		return null;
@@ -126,74 +131,16 @@ class EntityModel extends DefaultModel
 	/**
 	 * {@inheritdoc}
 	 */
-	public function setProperty($propertyName, $value)
+	public function setProperty($propertyName, $propertyValue)
 	{
-		// ID is not setable in doctrine
-		if ($propertyName == 'id') {
-			return;
-		}
-
 		$entity = $this->getEntity();
 
 		if ($entity) {
-			$reflectionClass = $this->getReflectionClass();
-
-			$setter = 'set' . ucfirst($propertyName);
-			if ($reflectionClass->hasMethod($setter)) {
-				$setter = $reflectionClass->getMethod($setter);
-				$reflectionParameters = $setter->getParameters();
-				$reflectionParameter = $reflectionParameters[0];
-				$reflectionParameterClass = $reflectionParameter->getClass();
-
-				if ($value !== null && $reflectionParameterClass && $reflectionParameterClass->isSubclassOf('Contao\Doctrine\ORM\Entity')) {
-					$value = EntityHelper::findByCombinedId($reflectionParameterClass, $value);
-				}
-				else if ($reflectionParameterClass && $reflectionParameterClass->getName() == 'DateTime' && !$value instanceof \DateTime) {
-					$datetime = new \DateTime();
-					$datetime->setTimestamp($value);
-					$value = $datetime;
-				}
-
-				$setter->invoke($entity, $value);
-			}
-			else {
-				$getter = 'get' . ucfirst($propertyName);
-				if ($reflectionClass->hasMethod($getter)) {
-					$getter = $reflectionClass->getMethod($getter);
-					$currentValue = $getter->invoke($entity);
-				}
-				else if ($reflectionClass->hasProperty($propertyName)) {
-					$reflectionProperty = $reflectionClass->getProperty($propertyName);
-					$reflectionProperty->setAccessible(true);
-					$currentValue = $reflectionProperty->getValue($entity);
-				}
-				else {
-					throw new \RuntimeException('Could not find property ' . $propertyName . ' on entity ' . get_class($entity));
-				}
-
-				if ($currentValue instanceof Collection) {
-					$adder = 'add' . ucfirst(rtrim($propertyName, 's'));
-					$adder = $reflectionClass->getMethod($adder);
-					$reflectionParameters = $adder->getParameters();
-					$reflectionParameter = $reflectionParameters[0];
-					$reflectionParameterClass = $reflectionParameter->getClass();
-
-					$currentValue->clear();
-					foreach (((array) $value) as $id) {
-						if ($id instanceof Entity) {
-							$item = $id;
-						}
-						else {
-							$item = EntityHelper::findByCombinedId($reflectionParameterClass, $id);
-						}
-						$adder->invoke($entity, $item);
-					}
-				}
-				else {
-					$entity->$propertyName = $value;
-				}
-			}
+			$entityAccessor = $this->getEntityAccessor();
+			$entityAccessor->setProperty($entity, $propertyName, $propertyValue);
 		}
+
+		return $this;
 	}
 
 	/**
@@ -204,7 +151,8 @@ class EntityModel extends DefaultModel
 		$entity = $this->getEntity();
 
 		if ($entity) {
-			return $entity->toArray();
+			$entityAccessor = $this->getEntityAccessor();
+			return $entityAccessor->getProperties($entity);
 		}
 
 		return array();
@@ -218,10 +166,11 @@ class EntityModel extends DefaultModel
 		$entity = $this->getEntity();
 
 		if ($entity) {
-			foreach ($properties as $propertyName => $value) {
-				$this->setProperty($propertyName, $value);
-			}
+			$entityAccessor = $this->getEntityAccessor();
+			$entityAccessor->setProperties($entity, $properties);
 		}
+
+		return $this;
 	}
 
 	/**
@@ -242,10 +191,98 @@ class EntityModel extends DefaultModel
 	}
 
 	/**
+	 * {@inheritDoc}
+	 *
+	 * @throws DcGeneralInvalidArgumentException When a property in the value bag has been marked as invalid.
+	 */
+	public function readFromPropertyValueBag(PropertyValueBagInterface $valueBag)
+	{
+		$entity = $this->getEntity();
+
+		if ($entity) {
+			$entityAccessor = $this->getEntityAccessor();
+			$properties     = $entityAccessor->getProperties($entity);
+
+			foreach ($properties as $name => $value) {
+				if (!$valueBag->hasPropertyValue($name)) {
+					continue;
+				}
+
+				if ($valueBag->isPropertyValueInvalid($name)) {
+					throw new DcGeneralInvalidArgumentException('The value for property ' . $name . ' is invalid.');
+				}
+
+				$entityAccessor->setProperty(
+					$entity,
+					$name,
+					$valueBag->getPropertyValue($value)
+				);
+			}
+		}
+
+		return $this;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function writeToPropertyValueBag(PropertyValueBagInterface $valueBag)
+	{
+		$entity = $this->getEntity();
+
+		if ($entity) {
+			$entityAccessor = $this->getEntityAccessor();
+			$properties     = $entityAccessor->getProperties($entity);
+
+			foreach ($properties as $name => $value) {
+				if (!$valueBag->hasPropertyValue($name)) {
+					continue;
+				}
+
+				$valueBag->setPropertyValue($name, $value);
+			}
+		}
+
+		return $this;
+	}
+
+	/**
 	 * {@inheritdoc}
 	 */
 	public function getIterator()
 	{
-		return new \ArrayIterator($this->getEntity()->toArray());
+		$entity = $this->getEntity();
+
+		if ($entity) {
+			$entityAccessor = $this->getEntityAccessor();
+			$properties     = $entityAccessor->getProperties($entity);
+			return new \ArrayIterator($properties);
+		}
+
+		return null;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function __clone()
+	{
+		$entity = $this->getEntity();
+
+		if ($entity) {
+			$entityClass    = $this->getReflectionClass();
+			$entityAccessor = $this->getEntityAccessor();
+
+			// get all properties
+			$properties = $entityAccessor->getProperties($entity);
+
+			// create a new entity
+			$entity = $entityClass->newInstance();
+
+			// set all properties
+			$entityAccessor->setProperties($entity, $properties);
+
+			$this->entity = $entity;
+		}
 	}
 }

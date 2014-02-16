@@ -15,8 +15,8 @@
 
 namespace Contao\Doctrine\ORM\DataContainer\General;
 
-use Contao\Doctrine\ORM\Entity;
 use Contao\Doctrine\ORM\EntityHelper;
+use Contao\Doctrine\ORM\EntityInterface;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
 
@@ -27,7 +27,7 @@ class Helper
 	 *
 	 * @param QueryBuilder     $queryBuilder
 	 * @param mixed            $id
-	 * @param Entity           $entity
+	 * @param EntityInterface  $entity
 	 * @param bool             $singleton
 	 * @param \ReflectionClass $entityClass
 	 *
@@ -36,7 +36,7 @@ class Helper
 	static public function extendQueryWhereId(
 		QueryBuilder $queryBuilder,
 		$id,
-		Entity $entity,
+		$entity,
 		$singleton = false,
 		\ReflectionClass $entityClass = null
 	) {
@@ -44,8 +44,14 @@ class Helper
 			$entityClass = new \ReflectionClass($entity);
 		}
 
-		$keys     = explode(',', $entityClass->getConstant('KEY'));
-		$idValues = is_array($id) ? $id : explode($entityClass->getConstant('KEY_SEPARATOR'), $id);
+		if ($entityClass->hasConstant('PRIMARY_KEY')) {
+			$keys = explode(',', $entityClass->getConstant('PRIMARY_KEY'));
+		}
+		else {
+			$keys = array('id');
+		}
+
+		$idValues = is_array($id) ? $id : explode('|', $id);
 
 		if (count($keys) != count($idValues)) {
 			throw new \RuntimeException(
@@ -84,7 +90,7 @@ class Helper
 	 */
 	static public function generateAlias($alias, \DC_General $dc)
 	{
-		/** @var Entity $entity */
+		/** @var EntityInterface $entity */
 		$entity    = $dc
 			->getCurrentModel()
 			->getEntity();
