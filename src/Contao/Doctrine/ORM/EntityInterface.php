@@ -35,12 +35,12 @@ interface EntityInterface
 	 *
 	 * @return string
 	 */
-	public function entityTableName();
+	static public function entityTableName();
 
 	/**
 	 * Return a list of property names, that used as primary key.
 	 *
 	 * @return array
 	 */
-	public function entityPrimaryKeyNames();
+	static public function entityPrimaryKeyNames();
 }

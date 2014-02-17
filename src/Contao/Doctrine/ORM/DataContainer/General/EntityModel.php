@@ -122,7 +122,13 @@ class EntityModel extends AbstractModel
 
 		if ($entity) {
 			$entityAccessor = $this->getEntityAccessor();
-			return $entityAccessor->getProperty($entity, $propertyName);
+			$value = $entityAccessor->getProperty($entity, $propertyName);
+
+			if ($value instanceof EntityInterface) {
+				$value = $entityAccessor->getPrimaryKey($value);
+			}
+
+			return $value;
 		}
 
 		return null;
@@ -152,7 +158,15 @@ class EntityModel extends AbstractModel
 
 		if ($entity) {
 			$entityAccessor = $this->getEntityAccessor();
-			return $entityAccessor->getProperties($entity);
+			$values = $entityAccessor->getProperties($entity);
+
+			foreach ($values as $key => $value) {
+				if ($value instanceof EntityInterface) {
+					$values[$key] = $entityAccessor->getPrimaryKey($value);
+				}
+			}
+
+			return $values;
 		}
 
 		return array();
@@ -237,6 +251,10 @@ class EntityModel extends AbstractModel
 			foreach ($properties as $name => $value) {
 				if (!$valueBag->hasPropertyValue($name)) {
 					continue;
+				}
+
+				if ($value instanceof EntityInterface) {
+					$value = $entityAccessor->getPrimaryKey($value);
 				}
 
 				$valueBag->setPropertyValue($name, $value);

@@ -60,11 +60,17 @@ class EntityHelper
 			$class = new \ReflectionClass($class);
 		}
 
-		$keySeparator   = '|';
-		$keyDeclaration = $class->hasConstant('PRIMARY_KEY') ? $class->getConstant('PRIMARY_KEY') : 'id';
-		$keys           = explode(',', $keyDeclaration);
-		$ids            = explode($keySeparator, $combinedId);
-		$criteria       = array_combine($keys, $ids);
+		if ($class->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
+			$keys = $class
+				->getMethod('entityPrimaryKeyNames')
+				->invoke(null);
+		}
+		else {
+			$keys = array('id');
+		}
+
+		$ids      = explode('|', $combinedId);
+		$criteria = array_combine($keys, $ids);
 
 		return $criteria;
 	}

@@ -293,7 +293,16 @@ class EntityAccessor
 		if ($class->hasMethod($setterName)) {
 			$setterMethod = $class->getMethod($setterName);
 
-			if ($setterMethod->getNumberOfRequiredParameters() <= 1) {
+			if (
+				$setterMethod->getNumberOfParameters() > 0 &&
+				$setterMethod->getNumberOfRequiredParameters() <= 1
+			) {
+				$parameters = $setterMethod->getParameters();
+				$firstParameter = $parameters[0];
+				$typeClass = $firstParameter->getClass();
+
+				$propertyValue = $this->guessValue($typeClass, $propertyValue);
+
 				$setterMethod->setAccessible(true);
 				$setterMethod->invoke($entity, $propertyValue);
 				return $this;
@@ -413,7 +422,16 @@ class EntityAccessor
 			if ($class->hasMethod($setterName)) {
 				$setterMethod = $class->getMethod($setterName);
 
-				if ($setterMethod->getNumberOfRequiredParameters() <= 1) {
+				if (
+					$setterMethod->getNumberOfParameters() > 0 &&
+					$setterMethod->getNumberOfRequiredParameters() <= 1
+				) {
+					$parameters = $setterMethod->getParameters();
+					$firstParameter = $parameters[0];
+					$typeClass = $firstParameter->getClass();
+
+					$propertyValue = $this->guessValue($typeClass, $propertyValue);
+
 					$setterMethod->setAccessible(true);
 					$setterMethod->invoke($entity, $propertyValue);
 					continue;
@@ -429,5 +447,23 @@ class EntityAccessor
 
 			throw new UnknownPropertyException($entity, $propertyName);
 		}
+	}
+
+	public function guessValue(\ReflectionClass $targetType = null, $currentValue)
+	{
+		if (
+			is_object($currentValue) ||
+			!$targetType ||
+			!$targetType->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')
+		) {
+			return $currentValue;
+		}
+
+		$className = $targetType->getName();
+
+		$repository = EntityHelper::getRepository($className);
+		$primaryKey = EntityHelper::parseCombinedId($className, $currentValue);
+
+		return $repository->find($primaryKey);
 	}
 }

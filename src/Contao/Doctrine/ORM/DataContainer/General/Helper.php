@@ -44,8 +44,10 @@ class Helper
 			$entityClass = new \ReflectionClass($entity);
 		}
 
-		if ($entityClass->hasConstant('PRIMARY_KEY')) {
-			$keys = explode(',', $entityClass->getConstant('PRIMARY_KEY'));
+		if ($entityClass->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
+			$keys = $entityClass
+				->getMethod('entityPrimaryKeyNames')
+				->invoke(null);
 		}
 		else {
 			$keys = array('id');

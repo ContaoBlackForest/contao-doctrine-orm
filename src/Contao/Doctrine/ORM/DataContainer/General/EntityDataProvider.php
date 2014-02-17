@@ -509,8 +509,12 @@ class EntityDataProvider implements DataProviderInterface
 	 */
 	public function isUniqueValue($field, $value, $id = null)
 	{
-		if ($this->entityClass->hasConstant('PRIMARY_KEY')) {
-			$keys = explode(',', $this->entityClass->getConstant('PRIMARY_KEY'));
+		$entityClass = $this->entityClass;
+
+		if ($entityClass->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
+			$keys = $entityClass
+				->getMethod('entityPrimaryKeyNames')
+				->invoke(null);
 		}
 		else {
 			$keys = array('id');

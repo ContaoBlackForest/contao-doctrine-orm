@@ -65,7 +65,7 @@ protected static $__saveCallbacks = <saveCallbacks>;
 	/**
 	 * {@inheritdoc}
 	 */
-	public function entityTableName()
+	static public function entityTableName()
 	{
 		return static::TABLE_NAME;
 	}
@@ -73,7 +73,7 @@ protected static $__saveCallbacks = <saveCallbacks>;
 	/**
 	 * {@inheritdoc}
 	 */
-	public function entityPrimaryKeyNames()
+	static public function entityPrimaryKeyNames()
 	{
 		return explode(\',\', static::PRIMARY_KEY);
 	}
