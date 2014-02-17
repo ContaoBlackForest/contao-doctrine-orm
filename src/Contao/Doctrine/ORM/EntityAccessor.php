@@ -22,14 +22,16 @@ class EntityAccessor
 	/**
 	 * Get the primary key of this entity.
 	 *
+	 * @param mixed|EntityInterface $entity
+	 *
 	 * @return string
 	 */
 	public function getPrimaryKey($entity)
 	{
 		$class = new \ReflectionClass($entity);
 
-		if ($class->hasConstant('PRIMARY_KEY')) {
-			$keyNames = explode(',', $entity::PRIMARY_KEY);
+		if ($class->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
+			$keyNames = $entity->entityPrimaryKeyNames();
 		}
 		else {
 			$keyNames = array('id');
@@ -52,7 +54,7 @@ class EntityAccessor
 	}
 
 	/**
-	 * @param object $entity
+	 * @param mixed|EntityInterface $entity
 	 * @param mixed  $id
 	 * @param mixed  $_
 	 */
@@ -60,8 +62,8 @@ class EntityAccessor
 	{
 		$class = new \ReflectionClass($entity);
 
-		if ($class->hasConstant('PRIMARY_KEY')) {
-			$keyNames = explode(',', $entity::PRIMARY_KEY);
+		if ($class->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
+			$keyNames = $entity->entityPrimaryKeyNames();
 		}
 		else {
 			$keyNames = array('id');

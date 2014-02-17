@@ -27,13 +27,20 @@ class Repository extends EntityRepository
 	public function find($id, $lockMode = LockMode::NONE, $lockVersion = null)
 	{
 		if (is_scalar($id)) {
-			$className      = $this->getClassName();
-			$class          = new \ReflectionClass($className);
-			$keySeparator   = '|';
-			$keyDeclaration = $class->hasConstant('PRIMARY_KEY') ? $class->getConstant('PRIMARY_KEY') : 'id';
-			$keys           = explode(',', $keyDeclaration);
+			$className = $this->getClassName();
+			$class     = new \ReflectionClass($className);
+
+			if ($class->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
+				$keys = $class
+					->getMethod('entityPrimaryKeyNames')
+					->invoke(null);
+			}
+			else {
+				$keys = array('id');
+			}
+
 			if (count($keys) > 1) {
-				$ids = explode($keySeparator, $id);
+				$ids = explode('|', $id);
 				$id  = array_combine($keys, $ids);
 			}
 		}
