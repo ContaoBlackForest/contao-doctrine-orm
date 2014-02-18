@@ -16,6 +16,7 @@
 namespace Contao\Doctrine\ORM;
 
 use Contao\Doctrine\ORM\Exception\UnknownPropertyException;
+use Doctrine\ORM\Proxy\Proxy;
 
 class EntityAccessor
 {
@@ -164,6 +165,10 @@ class EntityAccessor
 		$propertyValues = array();
 
 		$class = new \ReflectionClass($entity);
+
+		if ($entity instanceof Proxy) {
+			$class = $class->getParentClass();
+		}
 
 		// collect all properties
 		if (empty($propertyNames)) {
@@ -333,6 +338,10 @@ class EntityAccessor
 		$propertyValues = array();
 
 		$class = new \ReflectionClass($entity);
+
+		if ($entity instanceof Proxy) {
+			$class = $class->getParentClass();
+		}
 
 		// collect all properties
 		if (empty($propertyNames)) {
