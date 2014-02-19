@@ -141,7 +141,7 @@ $container['doctrine.orm.entitySerializer'] = $container->share(
 );
 
 $container['doctrine.orm.entityAccessor'] = $container->share(
-	function ($container) {
+	function () {
 		return new \Contao\Doctrine\ORM\EntityAccessor();
 	}
 );
