@@ -37,8 +37,19 @@ $GLOBALS['TL_DCA']['...'] = array(
 	'entity' => array(
 		// (optional) Repository class name
 		'repositoryClass' => 'MyEntityRepositoryClassName',
-		// (optional) ID generator type (AUTO, IDENTITY, UUID)
-		'idGenerator'     => 'UUID',
+
+		// (optional) ID generator type
+		'idGenerator' => \Doctrine\ORM\Mapping\ClassMetadataInfo::GENERATOR_TYPE_UUID,
+
+		// (optional) Index definition
+		'indexes' => array(
+			'idx_name' => array('column_one', 'column_two', '...'),
+		),
+
+		// (optional) Unique constraints
+		'uniques' => array(
+			'unique_name' => array('column_one', 'column_two', '...'),
+		),
 	),
 	'fields' => array(
 		'...' => array(

@@ -43,6 +43,8 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 	{
 		global $container;
 
+		$builder = new ClassMetadataBuilder($metadata);
+
 		$tableName = static::classToTableName($className);
 
 		$this->loadDataContainer($tableName);
@@ -101,6 +103,54 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 			$metadata->setIdGeneratorType(ClassMetadataInfo::GENERATOR_TYPE_AUTO);
 		}
 
+		// indexes
+		if (isset($entityConfig['indexes'])) {
+			if (is_array($entityConfig['indexes'])) {
+				foreach ($entityConfig['indexes'] as $name => $columns) {
+					if (is_array($columns)) {
+						$builder->addIndex($columns, $name);
+					}
+					else {
+						throw new \RuntimeException(sprintf(
+							'$GLOBALS[TL_DCA][%s][entity][indexes][%s] must be an array',
+							$tableName,
+							$name
+						));
+					}
+				}
+			}
+			else {
+				throw new \RuntimeException(sprintf(
+					'$GLOBALS[TL_DCA][%s][entity][indexes] must be an array',
+					$tableName
+				));
+			}
+		}
+
+		// uniques
+		if (isset($entityConfig['uniques'])) {
+			if (is_array($entityConfig['uniques'])) {
+				foreach ($entityConfig['uniques'] as $name => $columns) {
+					if (is_array($columns)) {
+						$builder->addUniqueConstraint($columns, $name);
+					}
+					else {
+						throw new \RuntimeException(sprintf(
+							'$GLOBALS[TL_DCA][%s][entity][uniques][%s] must be an array',
+							$tableName,
+							$name
+						));
+					}
+				}
+			}
+			else {
+				throw new \RuntimeException(sprintf(
+					'$GLOBALS[TL_DCA][%s][entity][uniques] must be an array',
+					$tableName
+				));
+			}
+		}
+
 		$metadata->setInheritanceType(ClassMetadataInfo::INHERITANCE_TYPE_NONE);
 		$metadata->setPrimaryTable(
 			array('name' => $tableName)
@@ -132,7 +182,7 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 			else {
 				$fieldMapping = array();
 
-				$inputTypes = array($fieldConfig['inputType']);
+				$inputTypes       = array($fieldConfig['inputType']);
 				$inputTypeOptions = array();
 
 				if ($fieldConfig['foreignKey']) {
@@ -141,10 +191,10 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 				if ($fieldConfig['eval']['multiple']) {
 					$inputTypeOptions[] = 'multiple';
 				}
-				for ($i=0; $i<count($inputTypeOptions); $i++) {
+				for ($i = 0; $i < count($inputTypeOptions); $i++) {
 					$inputTypeOption = $fieldConfig['inputType'] . '_' . $inputTypeOptions[$i];
 					array_unshift($inputTypes, $inputTypeOption);
-					for ($j=$i+1; $j<count($inputTypeOptions); $j++) {
+					for ($j = $i + 1; $j < count($inputTypeOptions); $j++) {
 						$inputTypeOption .= '_' . $inputTypeOptions[$j];
 						array_unshift($inputTypes, $inputTypeOption);
 					}
@@ -224,7 +274,7 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 		array_shift($parts);
 
 		$partialTableName = 'orm';
-		$className = '';
+		$className        = '';
 
 		foreach ($parts as $part) {
 			$partialTableName .= '_' . $part;
@@ -251,7 +301,7 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 		if (!$preg) {
 			$classes = array_keys($namespaceMap);
 			$classes = array_map('preg_quote', $classes);
-			$preg = '~^(' . implode('|', $classes) . ')(\\\\(.*))?$~s';
+			$preg    = '~^(' . implode('|', $classes) . ')(\\\\(.*))?$~s';
 		}
 
 		if (preg_match($preg, $className, $matches)) {
