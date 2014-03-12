@@ -30,7 +30,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class EntityGeneration
 {
-	static public function generate(OutputInterface $output = null)
+	static public function generate(OutputInterface $output = null, &$reload = false)
 	{
 		global $container;
 
@@ -87,36 +87,43 @@ class EntityGeneration
 
 			// (re)load "connected" metadata information
 			$classMetadataFactory = $entityManager->getMetadataFactory();
-			$metadatas            = $classMetadataFactory->getAllMetadata();
 
-			$entityManager
-				->getProxyFactory()
-				->generateProxyClasses($metadatas, $proxiesCacheDir);
+			try {
+				$metadatas            = $classMetadataFactory->getAllMetadata();
 
-			if ($output) {
-				$output->write(
-					   PHP_EOL . sprintf('Entity proxies generated to "<info>%s</info>"', $proxiesCacheDir) . PHP_EOL
-				);
-			}
-			$logger->info(sprintf('Entity proxies generated to "%s"', $proxiesCacheDir));
+				$entityManager
+					->getProxyFactory()
+					->generateProxyClasses($metadatas, $proxiesCacheDir);
 
-			$repositoryGenerator = new EntityRepositoryGenerator();
-			foreach ($metadatas as $metadata) {
-				if ($metadata->customRepositoryClassName) {
-					if ($output) {
-						$output->write(
-							   sprintf(
-								   'Processing repository "<info>%s</info>"',
-								   $metadata->customRepositoryClassName
-							   ) . PHP_EOL
-						);
-					}
-
-					$repositoryGenerator->writeEntityRepositoryClass(
-										$metadata->customRepositoryClassName,
-											$repositoriesCacheDir
+				if ($output) {
+					$output->write(
+						   PHP_EOL . sprintf('Entity proxies generated to "<info>%s</info>"', $proxiesCacheDir) . PHP_EOL
 					);
 				}
+				$logger->info(sprintf('Entity proxies generated to "%s"', $proxiesCacheDir));
+
+				$repositoryGenerator = new EntityRepositoryGenerator();
+				foreach ($metadatas as $metadata) {
+					if ($metadata->customRepositoryClassName) {
+						if ($output) {
+							$output->write(
+								   sprintf(
+									   'Processing repository "<info>%s</info>"',
+									   $metadata->customRepositoryClassName
+								   ) . PHP_EOL
+							);
+						}
+
+						$repositoryGenerator->writeEntityRepositoryClass(
+											$metadata->customRepositoryClassName,
+												$repositoriesCacheDir
+						);
+					}
+				}
+			}
+			catch (\ReflectionException $e) {
+				// silently ignore and reload
+				$reload = true;
 			}
 
 			if ($output) {

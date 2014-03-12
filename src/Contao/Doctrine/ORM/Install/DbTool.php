@@ -19,7 +19,7 @@ use Contao\Doctrine\ORM\EntityHelper;
 use Doctrine\Common\Cache\ApcCache;
 use Doctrine\ORM\Tools\SchemaTool;
 
-class DbTool
+class DbTool extends \Controller
 {
 	public function hookSqlCompileCommands($return)
 	{
@@ -36,7 +36,12 @@ class DbTool
 		}
 
 		// force "disconnected" generation of entities
-		EntityGeneration::generate();
+		$reload = false;
+		EntityGeneration::generate(null, $reload);
+
+		if ($reload) {
+			$this->reload();
+		}
 
 		$metadatas = $entityManager
 			->getMetadataFactory()
