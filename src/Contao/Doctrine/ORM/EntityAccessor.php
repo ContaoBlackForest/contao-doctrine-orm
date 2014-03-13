@@ -78,7 +78,7 @@ class EntityAccessor
 		$keyValues = array_map(
 			function ($keyValue) use ($self) {
 				if (is_object($keyValue)) {
-					$keyValue = $self->getPrimaryKey($self);
+					$keyValue = $self->getPrimaryKey($keyValue);
 				}
 				return $keyValue;
 			},
