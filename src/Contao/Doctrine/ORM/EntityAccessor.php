@@ -494,6 +494,35 @@ class EntityAccessor
 		}
 	}
 
+	/**
+	 * Get a public property from an entity by getter.
+	 *
+	 * @param object $entity
+	 * @param string $propertyName
+	 *
+	 * @return mixed
+	 * @throws Exception\UnknownPropertyException
+	 */
+	public function getPublicProperty($entity, $propertyName)
+	{
+		$class = new \ReflectionClass($entity);
+
+		$getterName = explode('_', $propertyName);
+		$getterName = array_map('ucfirst', $getterName);
+		$getterName = implode('', $getterName);
+		$getterName = 'get' . $getterName;
+
+		if ($class->hasMethod($getterName)) {
+			$getterMethod = $class->getMethod($getterName);
+
+			if ($getterMethod->isPublic()) {
+				return $getterMethod->invoke($entity);
+			}
+		}
+
+		throw new UnknownPropertyException($entity, $propertyName);
+	}
+
 	public function guessValue(\ReflectionClass $targetType = null, $currentValue)
 	{
 		if (
