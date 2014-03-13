@@ -20,6 +20,14 @@ use Doctrine\ORM\EntityManager;
 class EntityHelper
 {
 	/**
+	 * @return EntityAccessor
+	 */
+	static public function getEntityAccessor()
+	{
+		return $GLOBALS['container']['doctrine.orm.entityAccessor'];
+	}
+
+	/**
 	 * @return EntityManager
 	 */
 	static public function getEntityManager()
