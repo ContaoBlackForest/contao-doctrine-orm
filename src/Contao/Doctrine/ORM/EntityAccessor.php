@@ -523,6 +523,91 @@ class EntityAccessor
 		throw new UnknownPropertyException($entity, $propertyName);
 	}
 
+	/**
+	 * Get all public properties from an entity by getters.
+	 *
+	 * @param object $entity
+	 *
+	 * @return array
+	 */
+	public function getPublicProperties($entity, $includePrimaryKey = false, array $propertyNames = array())
+	{
+		$propertyValues = array();
+
+		$class = new \ReflectionClass($entity);
+
+		if ($entity instanceof Proxy) {
+			$class = $class->getParentClass();
+		}
+
+		// collect all properties
+		if (empty($propertyNames)) {
+			// collect getters
+			$methods = $class->getMethods(
+				\ReflectionMethod::IS_PUBLIC
+			);
+			foreach ($methods as $method) {
+				if (preg_match('~^get([A-Z])$~', $method->getName(), $matches)) {
+					$propertyName  = lcfirst($matches[1]);
+					$propertyValue = $method->invoke($entity);
+
+					$propertyValues[$propertyName] = $propertyValue;
+				}
+			}
+		}
+
+		// collect selected properties
+		else {
+			foreach ($propertyNames as $propertyName) {
+				$getterName = explode('_', $propertyName);
+				$getterName = array_map('ucfirst', $getterName);
+				$getterName = implode('', $getterName);
+				$getterName = 'get' . $getterName;
+
+				if ($class->hasMethod($getterName)) {
+					$getterMethod = $class->getMethod($getterName);
+
+					if ($getterMethod->isPublic()) {
+						$propertyValue = $getterMethod->invoke($entity);
+
+						$propertyValues[$propertyName] = $propertyValue;
+						continue;
+					}
+				}
+
+				throw new UnknownPropertyException($entity, $propertyName);
+			}
+		}
+
+		if ($includePrimaryKey) {
+			if ($class->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
+				$keyNames = $entity->entityPrimaryKeyNames();
+			}
+			else {
+				$keyNames = array('id');
+			}
+
+			$self = $this;
+
+			$keyValues = $this->getRawProperties($entity, $keyNames);
+			$keyValues = array_map(
+				function ($keyValue) use ($self) {
+					if (is_object($keyValue)) {
+						$keyValue = $self->getPrimaryKey($self);
+					}
+					return $keyValue;
+				},
+				$keyValues
+			);
+
+			foreach ($keyValues as $keyName => $keyValue) {
+				$propertyValues[$keyName] = $keyValue;
+			}
+		}
+
+		return $propertyValues;
+	}
+
 	public function guessValue(\ReflectionClass $targetType = null, $currentValue)
 	{
 		if (
