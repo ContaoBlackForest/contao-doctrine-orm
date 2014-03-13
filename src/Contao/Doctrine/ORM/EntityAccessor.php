@@ -21,7 +21,41 @@ use Doctrine\ORM\Proxy\Proxy;
 class EntityAccessor
 {
 	/**
-	 * Get the primary key of this entity.
+	 * Get the primary key as array of properties from entity.
+	 *
+	 * @param mixed|EntityInterface $entity
+	 *
+	 * @return array|mixed[]
+	 */
+	public function getPrimaryKeyValues($entity)
+	{
+		$class = new \ReflectionClass($entity);
+
+		if ($class->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
+			$keyNames = $entity->entityPrimaryKeyNames();
+		}
+		else {
+			$keyNames = array('id');
+		}
+
+		$self = $this;
+
+		$keyValues = $this->getRawProperties($entity, $keyNames);
+		$keyValues = array_map(
+			function ($keyValue) use ($self) {
+				if (is_object($keyValue)) {
+					$keyValue = $self->getPrimaryKeyValues($keyValue);
+				}
+				return $keyValue;
+			},
+			$keyValues
+		);
+
+		return $keyValues;
+	}
+
+	/**
+	 * Get the primary key from entity.
 	 *
 	 * @param mixed|EntityInterface $entity
 	 *
