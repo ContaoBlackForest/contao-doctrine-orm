@@ -90,8 +90,8 @@ class EntityAccessor
 
 	/**
 	 * @param mixed|EntityInterface $entity
-	 * @param mixed  $id
-	 * @param mixed  $_
+	 * @param mixed                 $id
+	 * @param mixed                 $_
 	 */
 	public function setPrimaryKey($entity, $id)
 	{
@@ -338,9 +338,9 @@ class EntityAccessor
 				$setterMethod->getNumberOfParameters() > 0 &&
 				$setterMethod->getNumberOfRequiredParameters() <= 1
 			) {
-				$parameters = $setterMethod->getParameters();
+				$parameters     = $setterMethod->getParameters();
 				$firstParameter = $parameters[0];
-				$typeClass = $firstParameter->getClass();
+				$typeClass      = $firstParameter->getClass();
 
 				$propertyValue = $this->guessValue($typeClass, $propertyValue);
 
@@ -471,9 +471,9 @@ class EntityAccessor
 					$setterMethod->getNumberOfParameters() > 0 &&
 					$setterMethod->getNumberOfRequiredParameters() <= 1
 				) {
-					$parameters = $setterMethod->getParameters();
+					$parameters     = $setterMethod->getParameters();
 					$firstParameter = $parameters[0];
-					$typeClass = $firstParameter->getClass();
+					$typeClass      = $firstParameter->getClass();
 
 					$propertyValue = $this->guessValue($typeClass, $propertyValue);
 
