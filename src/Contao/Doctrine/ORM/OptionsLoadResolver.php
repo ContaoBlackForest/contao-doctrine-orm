@@ -48,8 +48,10 @@ class OptionsLoadResolver
 		$entityAccessor = EntityHelper::getEntityAccessor();
 		$ids            = array();
 
-		foreach ($entities as $entity) {
-			$ids[] = $entityAccessor->getPrimaryKey($entity);
+		if (is_array($entities)) {
+			foreach ($entities as $entity) {
+				$ids[] = $entityAccessor->getPrimaryKey($entity);
+			}
 		}
 
 		return $ids;
