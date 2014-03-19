@@ -27,12 +27,12 @@ $container['doctrine.orm.entityGeneratorFactory'] = $container->protect(
 	}
 );
 
-$container['doctrine.cache.orm'] = function($container) {
+$container['doctrine.cache.orm'] = function ($container) {
 	return $container['doctrine.cache.default'];
 };
 
 $container['doctrine.orm.entitiesCacheDir'] = $container->share(
-	function($container) {
+	function ($container) {
 		$entitiesCacheDir = TL_ROOT . '/system/cache/doctrine/entities';
 		if (!is_dir($entitiesCacheDir)) {
 			mkdir($entitiesCacheDir, 0777, true);
@@ -48,7 +48,7 @@ $container['doctrine.orm.entitiesCacheDir'] = $container->share(
 );
 
 $container['doctrine.orm.proxiesCacheDir'] = $container->share(
-	function($container) {
+	function ($container) {
 		$proxiesCacheDir = TL_ROOT . '/system/cache/doctrine/proxies';
 		if (!is_dir($proxiesCacheDir)) {
 			mkdir($proxiesCacheDir, 0777, true);
@@ -59,7 +59,7 @@ $container['doctrine.orm.proxiesCacheDir'] = $container->share(
 );
 
 $container['doctrine.orm.repositoriesCacheDir'] = $container->share(
-	function($container) {
+	function ($container) {
 		$repositoriesCacheDir = TL_ROOT . '/system/cache/doctrine/repositories';
 		if (!is_dir($repositoriesCacheDir)) {
 			mkdir($repositoriesCacheDir, 0777, true);
@@ -99,7 +99,9 @@ $container['doctrine.orm.entityManager'] = $container->share(
 			is_array($GLOBALS['TL_HOOKS']['prepareDoctrineEntityManager'])
 		) {
 			foreach ($GLOBALS['TL_HOOKS']['prepareDoctrineEntityManager'] as $callback) {
-				$object = method_exists($callback[0], 'getInstance') ? call_user_func(array($callback[0], 'getInstance')) : new $callback[0];
+				$object = method_exists($callback[0], 'getInstance') ? call_user_func(
+					array($callback[0], 'getInstance')
+				) : new $callback[0];
 				$object->$callback[1]($config);
 			}
 		}
@@ -175,7 +177,7 @@ $container['doctrine.orm.versionManager'] = $container->share(
 	}
 );
 
-$container['doctrine.orm.logger.handler.general'] = function($container) {
+$container['doctrine.orm.logger.handler.general'] = function ($container) {
 	$factory = $container['logger.factory.handler.group'];
 	return $factory($container['logger.default.handlers']);
 };
@@ -184,9 +186,9 @@ $container['doctrine.orm.logger.default.handlers'] = new ArrayObject(
 	array('doctrine.orm.logger.handler.general')
 );
 
-$container['doctrine.orm.logger'] = function($container) {
+$container['doctrine.orm.logger'] = function ($container) {
 	$factory = $container['logger.factory'];
-	$logger = $factory('orm', $container['doctrine.orm.logger.default.handlers']);
+	$logger  = $factory('orm', $container['doctrine.orm.logger.default.handlers']);
 
 	return $logger;
 };
