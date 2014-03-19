@@ -17,9 +17,9 @@ namespace Contao\Doctrine\ORM\DataContainer\General;
 
 use Contao\Doctrine\ORM\EntityAccessor;
 use Contao\Doctrine\ORM\EntityInterface;
-use DcGeneral\Data\AbstractModel;
-use DcGeneral\Data\PropertyValueBagInterface;
-use DcGeneral\Exception\DcGeneralInvalidArgumentException;
+use ContaoCommunityAlliance\DcGeneral\Data\AbstractModel;
+use ContaoCommunityAlliance\DcGeneral\Data\PropertyValueBagInterface;
+use ContaoCommunityAlliance\DcGeneral\Exception\DcGeneralInvalidArgumentException;
 
 class EntityModel extends AbstractModel
 {

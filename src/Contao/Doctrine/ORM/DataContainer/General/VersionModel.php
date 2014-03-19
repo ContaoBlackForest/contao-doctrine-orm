@@ -17,7 +17,7 @@ namespace Contao\Doctrine\ORM\DataContainer\General;
 
 use Contao\Doctrine\ORM\EntityAccessor;
 use Contao\Doctrine\ORM\EntityInterface;
-use DcGeneral\Data\DefaultModel;
+use ContaoCommunityAlliance\DcGeneral\Data\DefaultModel;
 use ORM\Entity\Version;
 
 class VersionModel extends EntityModel
