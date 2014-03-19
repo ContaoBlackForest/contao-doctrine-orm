@@ -117,26 +117,49 @@ $container['doctrine.orm.entityManager'] = $container->share(
 	}
 );
 
-$container['doctrine.orm.entitySerializer.normalizers'] = new ArrayObject(
-	array(
-		 new \Contao\Doctrine\ORM\Serializer\EntityNormalizer(),
-		 new \Contao\Doctrine\ORM\Serializer\DateTimeNormalizer(),
-		 new \Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer(),
-	)
-);
+$container['doctrine.orm.entitySerializer.eventSubscribers'] = new ArrayObject();
 
-$container['doctrine.orm.entitySerializer.encoders'] = new ArrayObject(
+$container['doctrine.orm.entitySerializer.subscribingHandlers'] = new ArrayObject(
 	array(
-		 new \Symfony\Component\Serializer\Encoder\JsonEncoder()
+		'Contao\Doctrine\ORM\Serializer\EntitySubscribingHandler',
 	)
 );
 
 $container['doctrine.orm.entitySerializer'] = $container->share(
 	function ($container) {
-		return new \Symfony\Component\Serializer\Serializer(
-			$container['doctrine.orm.entitySerializer.normalizers']->getArrayCopy(),
-			$container['doctrine.orm.entitySerializer.encoders']->getArrayCopy()
+		$builder = \JMS\Serializer\SerializerBuilder::create();
+		$builder->setCacheDir(TL_ROOT . '/system/tmp');
+		$builder->addDefaultHandlers();
+		$builder->addDefaultListeners();
+		$builder->addDefaultSerializationVisitors();
+		$builder->addDefaultDeserializationVisitors();
+		$builder->configureListeners(
+			function (\JMS\Serializer\EventDispatcher\EventDispatcher $eventDispatcher) use ($container) {
+				foreach (
+					$container['doctrine.orm.entitySerializer.eventSubscribers'] as
+					$eventSubscriberClassName
+				) {
+					$eventSubscriberClass = new ReflectionClass($eventSubscriberClassName);
+					$eventSubscriber      = $eventSubscriberClass->newInstance();
+
+					$eventDispatcher->addSubscriber($eventSubscriber);
+				}
+			}
 		);
+		$builder->configureHandlers(
+			function (\JMS\Serializer\Handler\HandlerRegistry $registry) use ($container) {
+				foreach (
+					$container['doctrine.orm.entitySerializer.subscribingHandlers'] as
+					$subscribingHandlerClassName
+				) {
+					$subscribingHandlerClass = new ReflectionClass($subscribingHandlerClassName);
+					$subscribingHandler      = $subscribingHandlerClass->newInstance();
+
+					$registry->registerSubscribingHandler($subscribingHandler);
+				}
+			}
+		);
+		return $builder->build();
 	}
 );
 

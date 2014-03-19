@@ -16,8 +16,8 @@
 namespace Contao\Doctrine\ORM;
 
 use Doctrine\Common\Collections\Collection;
+use JMS\Serializer\Serializer;
 use ORM\Entity\Version;
-use Symfony\Component\Serializer\Serializer;
 
 class VersionManager
 {

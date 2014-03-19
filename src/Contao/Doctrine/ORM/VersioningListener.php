@@ -17,8 +17,8 @@ namespace Contao\Doctrine\ORM;
 
 use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\Event\OnFlushEventArgs;
+use JMS\Serializer\Serializer;
 use ORM\Entity\Version;
-use Symfony\Component\Serializer\Serializer;
 
 class VersioningListener implements EventSubscriber
 {
