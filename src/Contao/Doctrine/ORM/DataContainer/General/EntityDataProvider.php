@@ -206,7 +206,13 @@ class EntityDataProvider implements DataProviderInterface
 			return $this->mapEntity($repository->find($config->getId()));
 		}
 		if ($config->getFilter()) {
-			return $this->fetchAll($config);
+			$config = clone $config;
+			$config->setAmount(1);
+			$collection = $this->fetchAll($config);
+
+			if ($collection->length()) {
+				return $collection->get(0);
+			}
 		}
 		return $this->getEmptyModel();
 	}
