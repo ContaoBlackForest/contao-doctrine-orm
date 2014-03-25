@@ -229,7 +229,7 @@ class EntityModel extends AbstractModel
 				$entityAccessor->setProperty(
 					$entity,
 					$name,
-					$valueBag->getPropertyValue($value)
+					$valueBag->getPropertyValue($name)
 				);
 			}
 		}
