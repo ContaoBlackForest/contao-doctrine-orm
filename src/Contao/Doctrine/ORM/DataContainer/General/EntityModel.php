@@ -128,6 +128,10 @@ class EntityModel extends AbstractModel
 				$value = $entityAccessor->getPrimaryKey($value);
 			}
 
+			if (is_resource($value)) {
+				$value = stream_get_contents($value);
+			}
+
 			return $value;
 		}
 
@@ -163,6 +167,9 @@ class EntityModel extends AbstractModel
 			foreach ($values as $key => $value) {
 				if ($value instanceof EntityInterface) {
 					$values[$key] = $entityAccessor->getPrimaryKey($value);
+				}
+				else if (is_resource($value)) {
+					$values[$key] = stream_get_contents($value);
 				}
 			}
 
@@ -253,6 +260,9 @@ class EntityModel extends AbstractModel
 
 				if ($value instanceof EntityInterface) {
 					$value = $entityAccessor->getPrimaryKey($value);
+				}
+				else if (is_resource($value)) {
+					$value = stream_get_contents($value);
 				}
 
 				$valueBag->setPropertyValue($name, $value);
