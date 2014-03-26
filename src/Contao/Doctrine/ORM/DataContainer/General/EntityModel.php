@@ -206,8 +206,6 @@ class EntityModel extends AbstractModel
 
 	/**
 	 * {@inheritDoc}
-	 *
-	 * @throws DcGeneralInvalidArgumentException When a property in the value bag has been marked as invalid.
 	 */
 	public function readFromPropertyValueBag(PropertyValueBagInterface $valueBag)
 	{
