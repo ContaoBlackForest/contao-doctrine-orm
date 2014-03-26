@@ -48,7 +48,7 @@ class OptionsLoadResolver
 		$entityAccessor = EntityHelper::getEntityAccessor();
 		$ids            = array();
 
-		if (is_array($entities)) {
+		if (is_array($entities) || $entities instanceof \Traversable) {
 			foreach ($entities as $entity) {
 				$ids[] = $entityAccessor->getPrimaryKey($entity);
 			}
