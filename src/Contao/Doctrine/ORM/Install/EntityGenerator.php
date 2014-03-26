@@ -48,8 +48,10 @@ protected static $__saveCallbacks = <saveCallbacks>;
 	{
 		parent::__construct();
 
-		$this->typeAlias['timestamp']      = '\DateTime';
-		$this->typeAlias['contao-boolean'] = 'bool';
+		$this->typeAlias['timestamp']        = '\DateTime';
+		$this->typeAlias['serialized']       = 'mixed';
+		$this->typeAlias['serializedBinary'] = 'mixed';
+		$this->typeAlias['contao-boolean']   = 'bool';
 
 		// hack until https://github.com/doctrine/doctrine2/pull/719 is merged
 		self::$classTemplate = '<?php
