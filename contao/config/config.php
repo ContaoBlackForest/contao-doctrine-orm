@@ -22,6 +22,12 @@ $GLOBALS['TL_HOOKS']['sqlCompileCommands'][] = array('Contao\Doctrine\ORM\Instal
 
 
 /**
+ * Event subscribers
+ */
+$GLOBALS['TL_EVENT_SUBSCRIBERS'][] = 'Contao\Doctrine\ORM\Subscriber';
+
+
+/**
  * Console commands
  */
 $GLOBALS['CONSOLE_CMD'][] = 'Contao\Doctrine\ORM\Command\GenerateEntitiesCommand';
