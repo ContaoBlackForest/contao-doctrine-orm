@@ -203,8 +203,11 @@ class EntityDataProvider implements DataProviderInterface
 	{
 		if ($config->getId()) {
 			$repository = $this->getEntityRepository();
-			return $this->mapEntity($repository->find($config->getId()));
+			$entity     = $repository->find($config->getId());
+
+			return $entity ? $this->mapEntity($entity) : null;
 		}
+
 		if ($config->getFilter()) {
 			$config = clone $config;
 			$config->setAmount(1);
@@ -214,7 +217,8 @@ class EntityDataProvider implements DataProviderInterface
 				return $collection->get(0);
 			}
 		}
-		return $this->getEmptyModel();
+
+		return null;
 	}
 
 	/**
