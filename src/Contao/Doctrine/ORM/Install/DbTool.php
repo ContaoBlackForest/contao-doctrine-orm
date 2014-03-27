@@ -17,15 +17,74 @@ namespace Contao\Doctrine\ORM\Install;
 
 use Contao\Doctrine\ORM\EntityHelper;
 use Doctrine\Common\Cache\ApcCache;
+use Doctrine\DBAL\Migrations\Configuration\Configuration;
+use Doctrine\DBAL\Migrations\Migration;
+use Doctrine\DBAL\Migrations\OutputWriter;
 use Doctrine\ORM\Tools\SchemaTool;
 
 class DbTool extends \Controller
 {
 	public function hookSqlCompileCommands($return)
 	{
+		$this->loadLanguageFile('doctrine');
+
 		// auto-generate and update entities here
 		$GLOBALS['TL_CONFIG']['doctrineDevMode'] = true;
 
+		$hasMigrations = false;
+
+		$return = $this->generateMigrationSql($return, $hasMigrations);
+
+		if ($hasMigrations) {
+			$_SESSION['TL_INFO'][] = $GLOBALS['TL_LANG']['doctrine']['migrationRequired'];
+		}
+		else {
+			$return = $this->generateSchemaSql($return);
+		}
+
+		return $return;
+	}
+
+	public function generateMigrationSql($return, &$hasMigrations)
+	{
+		$config  = \Config::getInstance();
+		$modules = $config->getActiveModules();
+
+		$connection = $GLOBALS['container']['doctrine.connection.default'];
+		$output     = new OutputWriter();
+
+		foreach ($modules as $module) {
+			$path = sprintf('%s/system/modules/%s/migrations', TL_ROOT, $module);
+
+			if (is_dir($path)) {
+				$configuration = new Configuration($connection, $output);
+				$configuration->setName($module);
+				$configuration->setMigrationsTableName('doctrine_migration_versions__' . str_replace('-', '_', standardize($module)));
+				$configuration->setMigrationsNamespace('DoctrineMigrations');
+				$configuration->setMigrationsDirectory($path);
+				$configuration->registerMigrationsFromDirectory($path);
+
+				$migration = new Migration($configuration);
+				$versions  = $migration->getSql();
+
+				if (count($versions)) {
+					foreach ($versions as $version => $queries) {
+						if (count($queries)) {
+							$_SESSION['TL_CONFIRM'][] = sprintf($GLOBALS['TL_LANG']['doctrine']['migration'], $module, $version);
+
+							$hasMigrations = true;
+							$return        = $this->appendQueries($return, $queries);
+						}
+					}
+				}
+			}
+		}
+
+		return $return;
+	}
+
+	public function generateSchemaSql($return)
+	{
 		$entityManager = EntityHelper::getEntityManager();
 
 		$cacheDriver = $entityManager
@@ -47,78 +106,44 @@ class DbTool extends \Controller
 			->getMetadataFactory()
 			->getAllMetadata();
 		$tool      = new SchemaTool($entityManager);
-		$sqls      = $tool->getUpdateSchemaSql($metadatas);
+		$queries   = $tool->getUpdateSchemaSql($metadatas);
 
 		$filter = array_map('preg_quote', $GLOBALS['DOCTRINE_MANAGED_TABLE']);
 		$filter = implode('|', $filter);
 		$filter = sprintf('~^(CREATE|ALTER|DROP) TABLE (%s)~', $filter);
 
-		foreach ($sqls as $sql) {
-			if (!preg_match($filter, $sql)) {
-				continue;
+		$queries = array_filter(
+			$queries,
+			function ($query) use ($filter) {
+				return preg_match($filter, $query);
 			}
+		);
 
-			if (strpos($sql, 'CREATE TABLE') !== false) {
-				$return['CREATE'][] = $this->formatCreate($sql);
+		return $this->appendQueries($return, $queries);
+	}
+
+	protected function appendQueries(array $return, array $queries)
+	{
+		foreach ($queries as $query) {
+			if (strpos($query, 'CREATE TABLE') !== false) {
+				$return['CREATE'][] = $this->formatSql($query);
 			}
-			else if (strpos($sql, 'DROP TABLE') !== false) {
-				$return['DROP'][] = $this->formatDrop($sql);
+			else if (strpos($query, 'DROP TABLE') !== false) {
+				$return['DROP'][] = $this->formatSql($query);
 			}
-			else if (strpos($sql, 'ALTER TABLE') !== false) {
-				$return['ALTER_CHANGE'][] = $this->formatAlter($sql);
+			else if (strpos($query, 'ALTER TABLE') !== false) {
+				$return['ALTER_CHANGE'][] = $this->formatSql($query);
 			}
 			else {
-				$return['ALTER_CHANGE'][] = $this->formatSql($sql);
+				$return['ALTER_CHANGE'][] = $this->formatSql($query);
 			}
 		}
 
 		return $return;
 	}
 
-	protected function formatCreate($sql)
-	{
-		$sql = preg_replace(
-			'~orm_\w+ \(~',
-			"\$0\n  ",
-			$sql
-		);
-		$sql = preg_replace(
-			'~[^\s]+ [^\s]+ [^\s]+,~',
-			"\$0\n ",
-			$sql
-		);
-		$sql = str_replace(
-			') DEFAULT CHARACTER SET',
-			"\n) DEFAULT CHARACTER SET",
-			$sql
-		);
-
-		return $sql;
-	}
-
-	protected function formatDrop($sql)
-	{
-		return $sql;
-	}
-
-	protected function formatAlter($sql)
-	{
-		$sql = preg_replace(
-			'#(ADD|DROP|CHANGE)#',
-			"\n  $1",
-			$sql
-		);
-		$sql = preg_replace(
-			'#(FOREIGN KEY|REFERENCES)#',
-			"\n      $1",
-			$sql
-		);
-
-		return $sql;
-	}
-
 	protected function formatSql($sql)
 	{
-		return $sql;
+		return \SqlFormatter::format($sql, false);
 	}
 }
