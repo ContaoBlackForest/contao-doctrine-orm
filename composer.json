@@ -26,6 +26,7 @@
 		"contao-community-alliance/composer-installer": "*",
 		"contao-community-alliance/event-dispatcher": "~1",
 		"doctrine/orm": "2.4.*",
+		"doctrine/migrations": "~1.0",
 		"jms/serializer": "~0.15",
 		"jdorn/sql-formatter": "~1.2"
 	},
