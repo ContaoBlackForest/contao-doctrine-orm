@@ -57,10 +57,14 @@ class DbTool extends \Controller
 			$path = sprintf('%s/system/modules/%s/migrations', TL_ROOT, $module);
 
 			if (is_dir($path)) {
+				$namespace = preg_split('~[\-_]~', $module);
+				$namespace = array_map('ucfirst', $namespace);
+				$namespace = implode('', $namespace);
+
 				$configuration = new Configuration($connection, $output);
 				$configuration->setName($module);
 				$configuration->setMigrationsTableName('doctrine_migration_versions__' . str_replace('-', '_', standardize($module)));
-				$configuration->setMigrationsNamespace('DoctrineMigrations');
+				$configuration->setMigrationsNamespace('DoctrineMigrations\\' . $namespace);
 				$configuration->setMigrationsDirectory($path);
 				$configuration->registerMigrationsFromDirectory($path);
 
