@@ -63,7 +63,6 @@ class DbTool extends \Controller
 
 				$configuration = new Configuration($connection, $output);
 				$configuration->setName($module);
-				$configuration->setMigrationsTableName('doctrine_migration_versions__' . str_replace('-', '_', standardize($module)));
 				$configuration->setMigrationsNamespace('DoctrineMigrations\\' . $namespace);
 				$configuration->setMigrationsDirectory($path);
 				$configuration->registerMigrationsFromDirectory($path);
