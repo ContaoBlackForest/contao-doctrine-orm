@@ -159,7 +159,18 @@ class ContaoDcaDriver extends \Controller implements MappingDriver
 		$fields = (array) $GLOBALS['TL_DCA'][$tableName]['fields'];
 
 		foreach ($fields as $fieldName => $fieldConfig) {
-			if (array_key_exists('field', $fieldConfig) && $fieldConfig['field'] === false) {
+			$configured = array_key_exists('field', $fieldConfig) ||
+				array_key_exists('oneToOne', $fieldConfig) ||
+				array_key_exists('oneToMany', $fieldConfig) ||
+				array_key_exists('manyToOne', $fieldConfig) ||
+				array_key_exists('manyToMany', $fieldConfig);
+
+			if (
+				!$configured &&
+				empty($fieldConfig['inputType']) ||
+				$configured &&
+				$fieldConfig['field'] === false
+			) {
 				continue;
 			}
 
