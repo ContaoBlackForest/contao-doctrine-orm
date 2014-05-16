@@ -109,7 +109,7 @@ class VersioningListener implements EventSubscriber
 				$this->versions[] = $version;
 			}
 		}
-		catch (\RuntimeException $e) {
+		catch (\Exception $e) {
 			// silently ignore
 			// TODO work around binary data
 		}
