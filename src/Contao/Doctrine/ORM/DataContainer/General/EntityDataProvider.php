@@ -213,8 +213,8 @@ class EntityDataProvider implements DataProviderInterface
 			$config->setAmount(1);
 			$collection = $this->fetchAll($config);
 
-			if ($collection->length()) {
-				return $collection->get(0);
+			if (count($collection)) {
+				return $collection[0];
 			}
 		}
 
@@ -231,7 +231,8 @@ class EntityDataProvider implements DataProviderInterface
 		$queryBuilder     = $entityManager->createQueryBuilder();
 
 		$queryBuilder
-			->select('e')
+			// TODO Where do I get the name of the primary key from?!
+			->select($config->getIdOnly() ? 'e.id' : 'e')
 			->from($entityRepository->getClassName(), 'e');
 
 		if ($config->getFilter()) {
@@ -265,9 +266,16 @@ class EntityDataProvider implements DataProviderInterface
 		}
 
 		$query    = $queryBuilder->getQuery();
-		$entities = $query->getResult();
 
-		return $this->mapEntities($entities);
+		if ($config->getIdOnly()) {
+			$entities = $query->getScalarResult();
+		}
+		else {
+			$entities = $query->getResult();
+			$entities = $this->mapEntities($entities);
+		}
+
+		return $entities;
 	}
 
 	protected function buildCondition(QueryBuilder $queryBuilder, $condition, &$parameterIndex = 1)
