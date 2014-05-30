@@ -308,12 +308,16 @@ class EntityDataProvider implements DataProviderInterface
 			case '<':
 			case '<=':
 			case 'IN':
+			case 'LIKE':
 				$property = 'e.' . $condition['property'];
 
 				if ($condition['value'] === null) {
 					return $queryBuilder
 						->expr()
 						->isNull($property);
+				}
+				if ($condition['operation'] == 'LIKE') {
+					$condition['value'] = str_replace('*', '%', $condition['value']);
 				}
 
 				$parameter = ':parameter' . ($parameterIndex++);
@@ -344,6 +348,10 @@ class EntityDataProvider implements DataProviderInterface
 						return $queryBuilder
 							->expr()
 							->in($property, $parameter);
+					case 'LIKE':
+						return $queryBuilder
+							->expr()
+							->like($property, $parameter);
 				}
 				break;
 
