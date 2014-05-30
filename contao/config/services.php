@@ -167,7 +167,10 @@ $container['doctrine.orm.entitySerializer'] = $container->share(
 
 $container['doctrine.orm.entityAccessor'] = $container->share(
 	function () {
-		return new \Contao\Doctrine\ORM\EntityAccessor();
+		class_exists('Contao\Doctrine\ORM\Annotation\Accessor');
+
+		$annotationReader = new \Doctrine\Common\Annotations\AnnotationReader();
+		return new \Contao\Doctrine\ORM\EntityAccessor($annotationReader);
 	}
 );
 
