@@ -266,11 +266,13 @@ class EntityAccessor
 				$property = $class->getProperty($propertyName);
 				$property->setAccessible(true);
 				$property->setValue($entity, $propertyValue);
-				return $this;
+				continue;
 			}
 
 			throw new UnknownPropertyException($entity, $propertyName);
 		}
+
+		return $this;
 	}
 
 	/**
