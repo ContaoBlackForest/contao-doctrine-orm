@@ -300,13 +300,13 @@ class EntityModel extends AbstractModel
 			$entityAccessor = $this->getEntityAccessor();
 
 			// get all properties
-			$properties = $entityAccessor->getProperties($entity);
+			$properties = $entityAccessor->getRawProperties($entity);
 
 			// create a new entity
 			$entity = $entityClass->newInstance();
 
 			// set all properties
-			$entityAccessor->setProperties($entity, $properties);
+			$entityAccessor->setRawProperties($entity, $properties);
 
 			$this->entity = $entity;
 		}
