@@ -119,7 +119,13 @@ class EntityAccessor
 
 		$keyCount = count($keyNames);
 
-		$keyValues = (array) $id;
+		// clear primary key
+		if ($id === null) {
+			$keyValues = array_fill(0, $keyCount, null);
+		}
+		else {
+			$keyValues = (array) $id;
+		}
 
 		if ($keyCount != count($keyValues)) {
 			throw new \RuntimeException(
