@@ -15,11 +15,24 @@
 
 namespace Contao\Doctrine\ORM;
 
+use Contao\Doctrine\ORM\Annotation\Accessor;
 use Contao\Doctrine\ORM\Exception\UnknownPropertyException;
+use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\ORM\Proxy\Proxy;
 
 class EntityAccessor
 {
+
+	/**
+	 * @var AnnotationReader
+	 */
+	protected $annotationReader;
+
+	public function __construct(AnnotationReader $annotationReader)
+	{
+		$this->annotationReader = $annotationReader;
+	}
+
 	/**
 	 * Get the primary key as array of properties from entity.
 	 *
@@ -385,9 +398,22 @@ class EntityAccessor
 			);
 			foreach ($methods as $method) {
 				if (preg_match('~^get([A-Z])$~', $method->getName(), $matches)) {
+					/** @var Accessor $annotation */
+					$annotation = $this->annotationReader->getMethodAnnotation($method, 'Contao\Doctrine\ORM\Annotation\Accessor');
+
+					if ($annotation && $annotation->ignore) {
+						continue;
+					}
+
 					$method->setAccessible(true);
 
-					$propertyName  = lcfirst($matches[1]);
+					if ($annotation && $annotation->name) {
+						$propertyName = $annotation->name;
+					}
+					else {
+						$propertyName = lcfirst($matches[1]);
+					}
+
 					$propertyValue = $method->invoke($entity);
 
 					$propertyValues[$propertyName] = $propertyValue;
@@ -404,9 +430,22 @@ class EntityAccessor
 					continue;
 				}
 
+				/** @var Accessor $annotation */
+				$annotation = $this->annotationReader->getPropertyAnnotation($property, 'Contao\Doctrine\ORM\Annotation\Accessor');
+
+				if ($annotation && $annotation->ignore) {
+					continue;
+				}
+
 				$property->setAccessible(true);
 
-				$propertyName  = $property->getName();
+				if ($annotation && $annotation->name) {
+					$propertyName = $annotation->name;
+				}
+				else {
+					$propertyName  = $property->getName();
+				}
+
 				$propertyValue = $property->getValue($entity);
 
 				$propertyValues[$propertyName] = $propertyValue;
@@ -548,7 +587,19 @@ class EntityAccessor
 			);
 			foreach ($methods as $method) {
 				if (preg_match('~^get([A-Z])$~', $method->getName(), $matches)) {
-					$propertyName  = lcfirst($matches[1]);
+					$annotation = $this->annotationReader->getMethodAnnotation($method, 'Contao\Doctrine\ORM\Annotation\Accessor');
+
+					if ($annotation && $annotation->ignore) {
+						continue;
+					}
+
+					if ($annotation && $annotation->name) {
+						$propertyName = $annotation->name;
+					}
+					else {
+						$propertyName = lcfirst($matches[1]);
+					}
+
 					$propertyValue = $method->invoke($entity);
 
 					$propertyValues[$propertyName] = $propertyValue;
