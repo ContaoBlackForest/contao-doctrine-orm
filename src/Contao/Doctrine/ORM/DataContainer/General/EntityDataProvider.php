@@ -546,9 +546,9 @@ class EntityDataProvider implements DataProviderInterface
 			$keys = array('id');
 		}
 
-		$idValues = explode('|', $id);
+		$idValues = $id === null ? null : explode('|', $id);
 
-		if (count($keys) != count($idValues)) {
+		if ($idValues && count($keys) != count($idValues)) {
 			throw new \RuntimeException('Key count of ' . count($keys) . ' does not match id values count ' . count(
 					$idValues
 				));
@@ -565,14 +565,16 @@ class EntityDataProvider implements DataProviderInterface
 					->eq('e.' . $field, ':value')
 			)
 			->setParameter(':value', $value);
-		foreach ($keys as $index => $key) {
-			$queryBuilder
-				->andWhere(
-					$queryBuilder
-						->expr()
-						->neq('e.' . $key, ':key' . $index)
-				)
-				->setParameter(':key' . $index, $idValues[$index]);
+		if ($idValues) {
+			foreach ($keys as $index => $key) {
+				$queryBuilder
+					->andWhere(
+						$queryBuilder
+							->expr()
+							->neq('e.' . $key, ':key' . $index)
+					)
+					->setParameter(':key' . $index, $idValues[$index]);
+			}
 		}
 		$query = $queryBuilder->getQuery();
 		return !$query->getResult(Query::HYDRATE_SINGLE_SCALAR);
