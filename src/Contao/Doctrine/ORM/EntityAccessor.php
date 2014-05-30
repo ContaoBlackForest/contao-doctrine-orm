@@ -397,7 +397,7 @@ class EntityAccessor
 				\ReflectionMethod::IS_PRIVATE | \ReflectionMethod::IS_PROTECTED | \ReflectionMethod::IS_PUBLIC
 			);
 			foreach ($methods as $method) {
-				if (preg_match('~^get([A-Z])$~', $method->getName(), $matches)) {
+				if (preg_match('~^get([A-Z].*)$~', $method->getName(), $matches)) {
 					/** @var Accessor $annotation */
 					$annotation = $this->annotationReader->getMethodAnnotation($method, 'Contao\Doctrine\ORM\Annotation\Accessor');
 
@@ -586,7 +586,7 @@ class EntityAccessor
 				\ReflectionMethod::IS_PUBLIC
 			);
 			foreach ($methods as $method) {
-				if (preg_match('~^get([A-Z])$~', $method->getName(), $matches)) {
+				if (preg_match('~^get([A-Z].*)$~', $method->getName(), $matches)) {/** @var Accessor $annotation */
 					$annotation = $this->annotationReader->getMethodAnnotation($method, 'Contao\Doctrine\ORM\Annotation\Accessor');
 
 					if ($annotation && $annotation->ignore) {
