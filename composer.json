@@ -20,7 +20,7 @@
 	},
 	"require":{
 		"php":">=5.3",
-		"contao/core": ">=2.11.11,<3.3",
+		"contao/core": ">=2.11.11,<4-dev",
 		"bit3/contao-doctrine-dbal": "~1.1",
 		"bit3/contao-logger": "~1",
 		"contao-community-alliance/composer-installer": "*",
