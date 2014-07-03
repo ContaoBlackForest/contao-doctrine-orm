@@ -25,7 +25,9 @@ use ContaoCommunityAlliance\DcGeneral\Data\ConfigInterface;
 use ContaoCommunityAlliance\DcGeneral\Data\DataProviderInterface;
 use ContaoCommunityAlliance\DcGeneral\Data\DefaultCollection;
 use ContaoCommunityAlliance\DcGeneral\Data\DefaultConfig;
+use ContaoCommunityAlliance\DcGeneral\Data\DefaultFilterOptionCollection;
 use ContaoCommunityAlliance\DcGeneral\Data\DefaultModel;
+use ContaoCommunityAlliance\DcGeneral\Data\FilterOptionCollectionInterface;
 use ContaoCommunityAlliance\DcGeneral\Data\ModelInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
@@ -194,6 +196,14 @@ class EntityDataProvider implements DataProviderInterface
 	public function getEmptyCollection()
 	{
 		return new DefaultCollection();
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getEmptyFilterOptionCollection()
+	{
+		return new DefaultFilterOptionCollection();
 	}
 
 	/**
@@ -632,12 +642,10 @@ class EntityDataProvider implements DataProviderInterface
 			->getQuery()
 			->getResult();
 
-		$collection = new DefaultCollection();
+		$collection = new DefaultFilterOptionCollection();
 		if ($values) {
 			foreach ($values as $value) {
-				$model = new DefaultModel();
-				$model->setProperty($property, $value[$property]);
-				$collection->push($model);
+				$collection->add($value[$property], $value[$property]);
 			}
 		}
 
