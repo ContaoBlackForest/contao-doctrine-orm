@@ -99,7 +99,7 @@ public function <methodName>()
  */
 public function <methodName>(<methodTypeHint>$<variableName><variableDefault>)
 {
-<spaces>$this-><fieldName> = \Contao\Doctrine\ORM\EntityHelper::callSetterCallbacks($this, self::TABLE_NAME, \'<variableName>\', $<variableName>);
+<spaces>$this-><fieldName> = \Contao\Doctrine\ORM\EntityHelper::callSetterCallbacks($this, self::TABLE_NAME, \'<variableName>\', <variableCast>$<variableName>);
 
 <spaces>return $this;
 }';
@@ -222,6 +222,32 @@ public function <methodName>(<methodTypeHint>$<variableName><variableDefault>)
 			$methodTypeHint = '\\' . ltrim($variableType, '\\');
 		}
 
+		switch (trim($variableType)) {
+			case 'bool':
+			case 'boolean':
+				$variableCast = '(bool) ';
+				break;
+
+			case 'int':
+			case 'integer':
+				$variableCast = '(int) ';
+				break;
+
+			case 'float':
+			case 'double':
+				$variableCast = '(float) ';
+				break;
+
+			case 'string':
+				$variableCast = '(string) ';
+				break;
+
+			default:
+				$variableCast = '';
+		}
+
+		$variableName = Inflector::camelize($fieldName);
+
 		if ($metadata->hasField($fieldName) && $metadata->isNullable($fieldName)) {
 			$nullable = true;
 		}
@@ -229,11 +255,16 @@ public function <methodName>(<methodTypeHint>$<variableName><variableDefault>)
 			$nullable = false;
 		}
 
+		if ($nullable && $variableCast) {
+			$variableCast = sprintf('$%s === null ? null : %s', $variableName, $variableCast);
+		}
+
 		$replacements = array(
 			'<description>'     => ucfirst($type) . ' ' . $fieldName,
 			'<methodTypeHint>'  => $methodTypeHint,
 			'<variableType>'    => $variableType,
-			'<variableName>'    => Inflector::camelize($fieldName),
+			'<variableCast>'    => $variableCast,
+			'<variableName>'    => $variableName,
 			'<methodName>'      => $methodName,
 			'<fieldName>'       => $fieldName,
 			'<variableDefault>' => ($defaultValue !== null) ? (' = ' . $defaultValue) : ($nullable ? ' = null' : ''),
