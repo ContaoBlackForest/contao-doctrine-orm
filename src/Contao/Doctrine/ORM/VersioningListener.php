@@ -66,6 +66,9 @@ class VersioningListener implements EventSubscriber
 
 	protected function createVersion($action, $entity, OnFlushEventArgs $args)
 	{
+		// TODO version creation is disabled due to a lot of problems with the current serialisation format
+		return;
+
 		try {
 			$entityManager = $args->getEntityManager();
 			if ($entity instanceof EntityInterface && !$entity instanceof Version) {
