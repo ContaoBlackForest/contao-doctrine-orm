@@ -86,6 +86,52 @@ $container['doctrine.orm.entityManager'] = $container->share(
 		);
 		$config->setMetadataDriverImpl(new \Contao\Doctrine\ORM\Mapping\Driver\ContaoDcaDriver($entitiesCacheDir));
 
+		foreach (
+			array(
+				'ACOS'          => 'Acos',
+				'ASIN'          => 'Asin',
+				'ATAN'          => 'Atan',
+				'ATAN2'         => 'Atan2',
+				'BINARY'        => 'Binary',
+				'CHAR_LENGTH'   => 'CharLength',
+				'CONCAT_WS'     => 'ConcatWs',
+				'COS'           => 'Cos',
+				'COT'           => 'Cot',
+				'COUNTIF'       => 'CountIf',
+				'CRC32'         => 'Crc32',
+				'DATE'          => 'Date',
+				'DATE_FORMAT'   => 'DateFormat',
+				'DAY'           => 'Day',
+				'DEGREES'       => 'Degrees',
+				'FIELD'         => 'Field',
+				'FIND_IN_SET'   => 'FindInSet',
+				'GROUP_CONCAT'  => 'GroupConcat',
+				'HOUR'          => 'Hour',
+				'IF'            => 'IfElse',
+				'IFNULL'        => 'IfNull',
+				'MATCH'         => 'MatchAgainst',
+				'MD5'           => 'Md5',
+				'MONTH'         => 'Month',
+				'NULLIF'        => 'NullIf',
+				'PI'            => 'Pi',
+				'RADIANS'       => 'Radians',
+				'RAND'          => 'Rand',
+				'REGEXP'        => 'Regexp',
+				'ROUND'         => 'Round',
+				'SHA1'          => 'Sha1',
+				'SHA2'          => 'Sha2',
+				'SIN'           => 'Sin',
+				'STR_TO_DATE'   => 'StrToDate',
+				'TAN'           => 'Tan',
+				'TIMESTAMPDIFF' => 'TimestampDiff',
+				'WEEK'          => 'Week',
+				'YEAR'          => 'Year',
+			)
+			as $function => $className
+		) {
+			$config->addCustomStringFunction($function, 'DoctrineExtensions\\Query\\Mysql\\' . $className);
+		}
+
 		if (array_key_exists('DOCTRINE_ENTITY_NAMESPACE_ALIAS', $GLOBALS) &&
 			is_array($GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS'])
 		) {
