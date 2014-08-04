@@ -255,15 +255,20 @@ class EntityDataProvider implements DataProviderInterface
 		}
 
 		if ($config->getSorting()) {
-			$firstOrderBy = true;
+			$hiddenIndex = 0;
+
 			foreach ($config->getSorting() as $sort => $order) {
-				if ($firstOrderBy) {
-					$queryBuilder->orderBy('e.' . $sort, $order);
-					$firstOrderBy = false;
+				if ($order && $order != 'ASC' && $order != 'DESC') {
+					$queryBuilder->addSelect($order . ' AS HIDDEN _virtual_sorting_field_' . $hiddenIndex);
+					$sort  = '_virtual_sorting_field_' . $hiddenIndex;
+					$order = null;
+					$hiddenIndex++;
 				}
 				else {
-					$queryBuilder->addOrderBy('e.' . $sort, $order);
+					$sort = 'e.' . $sort;
 				}
+
+				$queryBuilder->addOrderBy($sort, $order);
 			}
 		}
 
@@ -275,7 +280,7 @@ class EntityDataProvider implements DataProviderInterface
 			$queryBuilder->setMaxResults($config->getAmount());
 		}
 
-		$query    = $queryBuilder->getQuery();
+		$query = $queryBuilder->getQuery();
 
 		if ($config->getIdOnly()) {
 			$entities = $query->getScalarResult();

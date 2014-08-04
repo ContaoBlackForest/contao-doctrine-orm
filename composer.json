@@ -36,6 +36,9 @@
 		"squizlabs/php_codesniffer":"1.*",
 		"bit3/php-coding-standard":"@dev"
 	},
+	"conflict": {
+		"contao-community-alliance/dc-general": "<2.0.0-beta18"
+	},
 	"autoload":{
 		"psr-0":{
 			"Contao\\Doctrine\\ORM": "src/"
