@@ -258,14 +258,16 @@ class EntityDataProvider implements DataProviderInterface
 			$hiddenIndex = 0;
 
 			foreach ($config->getSorting() as $sort => $order) {
-				if ($order && $order != 'ASC' && $order != 'DESC') {
+				$orderUppercase = strtoupper($order);
+				if ($order && $orderUppercase != 'ASC' && $orderUppercase != 'DESC') {
 					$queryBuilder->addSelect($order . ' AS HIDDEN _virtual_sorting_field_' . $hiddenIndex);
 					$sort  = '_virtual_sorting_field_' . $hiddenIndex;
 					$order = null;
 					$hiddenIndex++;
 				}
 				else {
-					$sort = 'e.' . $sort;
+					$sort  = 'e.' . $sort;
+					$order = $orderUppercase;
 				}
 
 				$queryBuilder->addOrderBy($sort, $order);
