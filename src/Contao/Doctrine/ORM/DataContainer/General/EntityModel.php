@@ -217,7 +217,7 @@ class EntityModel extends AbstractModel
 	public function getProviderName()
 	{
 		$entity = $this->getEntity();
-		return $entity::TABLE_NAME;
+		return $entity::entityTableName();
 	}
 
 	/**
