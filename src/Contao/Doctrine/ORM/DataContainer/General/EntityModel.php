@@ -205,10 +205,19 @@ class EntityModel extends AbstractModel
 	/**
 	 * {@inheritdoc}
 	 */
+	public function getDataDefinitionName()
+	{
+		$entity = $this->getEntity();
+		return $entity::entityTableName();
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
 	public function getProviderName()
 	{
 		$entity = $this->getEntity();
-		return $entity::TABLE_NAME;
+		return $entity::entityTableName();
 	}
 
 	/**
