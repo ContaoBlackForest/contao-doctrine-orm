@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ContaoBlackForest/contao-doctrine-orm.svg?branch=master)](https://travis-ci.org/ContaoBlackForest/contao-doctrine-orm)
+
 Doctrine ORM Bridge
 ===================
 
