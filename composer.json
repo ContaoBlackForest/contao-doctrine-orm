@@ -58,5 +58,8 @@
 			"dev-master": "2.1.x-dev",
 			"dev-develop": "2.2.x-dev"
 		}
-	}
+	},
+    "replace": {
+        "bit3/contao-doctrine-orm": "self.version"
+    }
 }
