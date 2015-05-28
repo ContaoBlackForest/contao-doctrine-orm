@@ -362,7 +362,7 @@ class EntityAccessor
                 $firstParameter = $parameters[0];
                 $typeClass = $firstParameter->getClass();
 
-                $propertyValue = $this->guessValue($typeClass, $propertyValue);
+                $propertyValue = $this->guessValue($propertyValue, $typeClass);
 
                 $setterMethod->setAccessible(true);
                 $setterMethod->invoke($entity, $propertyValue);
@@ -525,7 +525,7 @@ class EntityAccessor
                     $firstParameter = $parameters[0];
                     $typeClass = $firstParameter->getClass();
 
-                    $propertyValue = $this->guessValue($typeClass, $propertyValue);
+                    $propertyValue = $this->guessValue($propertyValue, $typeClass);
 
                     $setterMethod->setAccessible(true);
                     $setterMethod->invoke($entity, $propertyValue);
@@ -672,7 +672,7 @@ class EntityAccessor
         return $propertyValues;
     }
 
-    public function guessValue(\ReflectionClass $targetType = null, $currentValue)
+    public function guessValue($currentValue, \ReflectionClass $targetType = null)
     {
         if (is_object($currentValue) ||
             !$targetType ||

@@ -53,6 +53,8 @@ protected static $__saveCallbacks = <saveCallbacks>;
         $this->typeAlias['serializedBinary'] = 'mixed';
         $this->typeAlias['contao-boolean']   = 'bool';
 
+        // @codingStandardsIgnoreStart
+
         // hack until https://github.com/doctrine/doctrine2/pull/719 is merged
         self::$classTemplate = '<?php
 
@@ -103,6 +105,8 @@ public function <methodName>(<methodTypeHint>$<variableName><variableDefault>)
 
 <spaces>return $this;
 }';
+
+        // @codingStandardsIgnoreEnd
 
     }
 

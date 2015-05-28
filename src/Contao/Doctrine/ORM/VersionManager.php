@@ -124,7 +124,9 @@ class VersionManager
             return null;
         }
         if (!$version instanceof Version) {
-            throw new \RuntimeException('Version ID or entity is expected for VersionManager::getEntityVersion, got ' . gettype($version));
+            throw new \RuntimeException(
+                'Version ID or entity is expected for VersionManager::getEntityVersion, got ' . gettype($version)
+            );
         }
 
         /** @var Serializer $serializer */
