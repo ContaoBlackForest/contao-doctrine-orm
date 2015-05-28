@@ -13,4 +13,6 @@ install:
     - composer install --prefer-source
 
 script:
+    - ./vendor/bin/phpcs --standard=PSR2 src/ tests/
+    - ./vendor/bin/phpcbf --standard=PSR2 src/ tests/
     - ./vendor/bin/phpunit
