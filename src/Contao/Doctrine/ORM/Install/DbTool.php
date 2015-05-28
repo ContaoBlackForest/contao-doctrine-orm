@@ -24,129 +24,126 @@ use Doctrine\ORM\Tools\SchemaTool;
 
 class DbTool extends \Controller
 {
-	public function hookSqlCompileCommands($return)
-	{
-		$this->loadLanguageFile('doctrine');
+    public function hookSqlCompileCommands($return)
+    {
+        $this->loadLanguageFile('doctrine');
 
-		// auto-generate and update entities here
-		$GLOBALS['TL_CONFIG']['doctrineDevMode'] = true;
+        // auto-generate and update entities here
+        $GLOBALS['TL_CONFIG']['doctrineDevMode'] = true;
 
-		$hasMigrations = false;
+        $hasMigrations = false;
 
-		$return = $this->generateMigrationSql($return, $hasMigrations);
+        $return = $this->generateMigrationSql($return, $hasMigrations);
 
-		if ($hasMigrations) {
-			$_SESSION['TL_INFO'][] = $GLOBALS['TL_LANG']['doctrine']['migrationRequired'];
-		}
-		else {
-			$return = $this->generateSchemaSql($return);
-		}
+        if ($hasMigrations) {
+            $_SESSION['TL_INFO'][] = $GLOBALS['TL_LANG']['doctrine']['migrationRequired'];
+        } else {
+            $return = $this->generateSchemaSql($return);
+        }
 
-		return $return;
-	}
+        return $return;
+    }
 
-	public function generateMigrationSql($return, &$hasMigrations)
-	{
-		$config  = \Config::getInstance();
-		$modules = $config->getActiveModules();
+    public function generateMigrationSql($return, &$hasMigrations)
+    {
+        $config  = \Config::getInstance();
+        $modules = $config->getActiveModules();
 
-		$connection = $GLOBALS['container']['doctrine.connection.default'];
-		$output     = new OutputWriter();
+        $connection = $GLOBALS['container']['doctrine.connection.default'];
+        $output     = new OutputWriter();
 
-		foreach ($modules as $module) {
-			$path = sprintf('%s/system/modules/%s/migrations', TL_ROOT, $module);
+        foreach ($modules as $module) {
+            $path = sprintf('%s/system/modules/%s/migrations', TL_ROOT, $module);
 
-			if (is_dir($path)) {
-				$namespace = preg_split('~[\-_]~', $module);
-				$namespace = array_map('ucfirst', $namespace);
-				$namespace = implode('', $namespace);
+            if (is_dir($path)) {
+                $namespace = preg_split('~[\-_]~', $module);
+                $namespace = array_map('ucfirst', $namespace);
+                $namespace = implode('', $namespace);
 
-				$configuration = new Configuration($connection, $output);
-				$configuration->setName($module);
-				$configuration->setMigrationsNamespace('DoctrineMigrations\\' . $namespace);
-				$configuration->setMigrationsDirectory($path);
-				$configuration->registerMigrationsFromDirectory($path);
+                $configuration = new Configuration($connection, $output);
+                $configuration->setName($module);
+                $configuration->setMigrationsNamespace('DoctrineMigrations\\' . $namespace);
+                $configuration->setMigrationsDirectory($path);
+                $configuration->registerMigrationsFromDirectory($path);
 
-				$migration = new Migration($configuration);
-				$versions  = $migration->getSql();
+                $migration = new Migration($configuration);
+                $versions  = $migration->getSql();
 
-				if (count($versions)) {
-					foreach ($versions as $version => $queries) {
-						if (count($queries)) {
-							$_SESSION['TL_CONFIRM'][] = sprintf($GLOBALS['TL_LANG']['doctrine']['migration'], $module, $version);
+                if (count($versions)) {
+                    foreach ($versions as $version => $queries) {
+                        if (count($queries)) {
+                            $_SESSION['TL_CONFIRM'][] =
+                                sprintf($GLOBALS['TL_LANG']['doctrine']['migration'], $module, $version);
 
-							$hasMigrations = true;
-							$return        = $this->appendQueries($return, $queries);
-						}
-					}
-				}
-			}
-		}
+                            $hasMigrations = true;
+                            $return        = $this->appendQueries($return, $queries);
+                        }
+                    }
+                }
+            }
+        }
 
-		return $return;
-	}
+        return $return;
+    }
 
-	public function generateSchemaSql($return)
-	{
-		$entityManager = EntityHelper::getEntityManager();
+    public function generateSchemaSql($return)
+    {
+        $entityManager = EntityHelper::getEntityManager();
 
-		$cacheDriver = $entityManager
-			->getConfiguration()
-			->getMetadataCacheImpl();
-		if ($cacheDriver && !$cacheDriver instanceof ApcCache) {
-			$cacheDriver->deleteAll();
-		}
+        $cacheDriver = $entityManager
+            ->getConfiguration()
+            ->getMetadataCacheImpl();
+        if ($cacheDriver && !$cacheDriver instanceof ApcCache) {
+            $cacheDriver->deleteAll();
+        }
 
-		// force "disconnected" generation of entities
-		$reload = false;
-		EntityGeneration::generate(null, $reload);
+        // force "disconnected" generation of entities
+        $reload = false;
+        EntityGeneration::generate(null, $reload);
 
-		if ($reload) {
-			$this->reload();
-		}
+        if ($reload) {
+            $this->reload();
+        }
 
-		$metadatas = $entityManager
-			->getMetadataFactory()
-			->getAllMetadata();
-		$tool      = new SchemaTool($entityManager);
-		$queries   = $tool->getUpdateSchemaSql($metadatas);
+        $metadatas = $entityManager
+            ->getMetadataFactory()
+            ->getAllMetadata();
+        $tool      = new SchemaTool($entityManager);
+        $queries   = $tool->getUpdateSchemaSql($metadatas);
 
-		$filter = array_map('preg_quote', $GLOBALS['DOCTRINE_MANAGED_TABLE']);
-		$filter = implode('|', $filter);
-		$filter = sprintf('~^(CREATE|ALTER|DROP) TABLE (%s)~', $filter);
+        $filter = array_map('preg_quote', $GLOBALS['DOCTRINE_MANAGED_TABLE']);
+        $filter = implode('|', $filter);
+        $filter = sprintf('~^(CREATE|ALTER|DROP) TABLE (%s)~', $filter);
 
-		$queries = array_filter(
-			$queries,
-			function ($query) use ($filter) {
-				return preg_match($filter, $query);
-			}
-		);
+        $queries = array_filter(
+            $queries,
+            function ($query) use ($filter) {
+                return preg_match($filter, $query);
+            }
+        );
 
-		return $this->appendQueries($return, $queries);
-	}
+        return $this->appendQueries($return, $queries);
+    }
 
-	protected function appendQueries(array $return, array $queries)
-	{
-		foreach ($queries as $query) {
-			if (strpos($query, 'CREATE TABLE') !== false) {
-				$return['CREATE'][] = $this->formatSql($query);
-			}
-			else if (strpos($query, 'DROP TABLE') !== false) {
-				$return['DROP'][] = $this->formatSql($query);
-			}
-			else if (strpos($query, 'ALTER TABLE') !== false) {
-				$return['ALTER_CHANGE'][] = $this->formatSql($query);
-			}
-			else {
-				$return['ALTER_CHANGE'][] = $this->formatSql($query);
-			}
-		}
+    protected function appendQueries(array $return, array $queries)
+    {
+        foreach ($queries as $query) {
+            if (strpos($query, 'CREATE TABLE') !== false) {
+                $return['CREATE'][] = $this->formatSql($query);
+            } elseif (strpos($query, 'DROP TABLE') !== false) {
+                $return['DROP'][] = $this->formatSql($query);
+            } elseif (strpos($query, 'ALTER TABLE') !== false) {
+                $return['ALTER_CHANGE'][] = $this->formatSql($query);
+            } else {
+                $return['ALTER_CHANGE'][] = $this->formatSql($query);
+            }
+        }
 
-		return $return;
-	}
+        return $return;
+    }
 
-	protected function formatSql($sql)
-	{
-		return \SqlFormatter::format($sql, false);
-	}
+    protected function formatSql($sql)
+    {
+        return \SqlFormatter::format($sql, false);
+    }
 }

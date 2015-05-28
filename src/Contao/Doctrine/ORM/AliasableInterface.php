@@ -22,10 +22,10 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 interface AliasableInterface
 {
-	/**
-	 * Return the alias parent field value, to generate the alias from.
-	 *
-	 * @return string
-	 */
-	public function getAliasParentValue();
+    /**
+     * Return the alias parent field value, to generate the alias from.
+     *
+     * @return string
+     */
+    public function getAliasParentValue();
 }

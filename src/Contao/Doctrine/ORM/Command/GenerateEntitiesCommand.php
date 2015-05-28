@@ -26,15 +26,15 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class GenerateEntitiesCommand extends Command
 {
-	protected function configure()
-	{
-		$this
-			->setName('doctrine:orm:generate-entities')
-			->setDescription('Generate entity classes from your mapping information.');
-	}
+    protected function configure()
+    {
+        $this
+            ->setName('doctrine:orm:generate-entities')
+            ->setDescription('Generate entity classes from your mapping information.');
+    }
 
-	protected function execute(InputInterface $input, OutputInterface $output)
-	{
-		EntityGeneration::generate($output);
-	}
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        EntityGeneration::generate($output);
+    }
 }

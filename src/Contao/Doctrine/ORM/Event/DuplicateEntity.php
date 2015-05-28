@@ -20,39 +20,39 @@ use Symfony\Component\EventDispatcher\Event;
 
 class DuplicateEntity extends Event
 {
-	/**
-	 * @var EntityInterface
-	 */
-	protected $entity;
+    /**
+     * @var EntityInterface
+     */
+    protected $entity;
 
-	/**
-	 * @var bool
-	 */
-	protected $withoutKeys;
+    /**
+     * @var bool
+     */
+    protected $withoutKeys;
 
-	/**
-	 * @param EntityInterface $entity
-	 * @param bool            $withoutKeys
-	 */
-	function __construct($entity, $withoutKeys)
-	{
-		$this->entity      = $entity;
-		$this->withoutKeys = (bool) $withoutKeys;
-	}
+    /**
+     * @param EntityInterface $entity
+     * @param bool            $withoutKeys
+     */
+    public function __construct($entity, $withoutKeys)
+    {
+        $this->entity      = $entity;
+        $this->withoutKeys = (bool) $withoutKeys;
+    }
 
-	/**
-	 * @return EntityInterface
-	 */
-	public function getEntity()
-	{
-		return $this->entity;
-	}
+    /**
+     * @return EntityInterface
+     */
+    public function getEntity()
+    {
+        return $this->entity;
+    }
 
-	/**
-	 * @return bool
-	 */
-	public function getWithoutKeys()
-	{
-		return $this->withoutKeys;
-	}
+    /**
+     * @return bool
+     */
+    public function getWithoutKeys()
+    {
+        return $this->withoutKeys;
+    }
 }

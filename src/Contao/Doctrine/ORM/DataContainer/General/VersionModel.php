@@ -22,70 +22,70 @@ use ORM\Entity\Version;
 
 class VersionModel extends EntityModel
 {
-	protected $active;
+    protected $active;
 
-	function __construct(Version $versionEntity, $active)
-	{
-		parent::__construct($versionEntity);
-		$this->active = $active;
-	}
+    public function __construct(Version $versionEntity, $active)
+    {
+        parent::__construct($versionEntity);
+        $this->active = $active;
+    }
 
-	/**
-	 * @return EntityInterface|Version
-	 */
-	public function getEntity()
-	{
-		return parent::getEntity();
-	}
+    /**
+     * @return EntityInterface|Version
+     */
+    public function getEntity()
+    {
+        return parent::getEntity();
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getProperty($strPropertyName)
-	{
-		switch ($strPropertyName) {
-			case 'version':
-				return $this->getVersion();
+    /**
+     * {@inheritdoc}
+     */
+    public function getProperty($strPropertyName)
+    {
+        switch ($strPropertyName) {
+            case 'version':
+                return $this->getVersion();
 
-			case 'active':
-				return $this->isCurrent();
+            case 'active':
+                return $this->isCurrent();
 
-			case 'tstamp':
-				return $this->getDateTime();
+            case 'tstamp':
+                return $this->getDateTime();
 
-			case 'username':
-				return $this->getAuthorName();
-		}
+            case 'username':
+                return $this->getAuthorName();
+        }
 
-		return parent::getProperty($strPropertyName);
-	}
+        return parent::getProperty($strPropertyName);
+    }
 
-	public function getVersion()
-	{
-		$entity = $this->getEntity();
-		return $entity->getId();
-	}
+    public function getVersion()
+    {
+        $entity = $this->getEntity();
+        return $entity->getId();
+    }
 
-	public function getDateTime()
-	{
-		$entity = $this->getEntity();
-		return $entity->getCreatedAt();
-	}
+    public function getDateTime()
+    {
+        $entity = $this->getEntity();
+        return $entity->getCreatedAt();
+    }
 
-	public function isCurrent()
-	{
-		return $this->active;
-	}
+    public function isCurrent()
+    {
+        return $this->active;
+    }
 
-	public function getAuthorName()
-	{
-		$entity = $this->getEntity();
-		return $entity->getUsername();
-	}
+    public function getAuthorName()
+    {
+        $entity = $this->getEntity();
+        return $entity->getUsername();
+    }
 
-	public function getAuthorUsername()
-	{
-		$entity = $this->getEntity();
-		return $entity->getUsername();
-	}
+    public function getAuthorUsername()
+    {
+        $entity = $this->getEntity();
+        return $entity->getUsername();
+    }
 }

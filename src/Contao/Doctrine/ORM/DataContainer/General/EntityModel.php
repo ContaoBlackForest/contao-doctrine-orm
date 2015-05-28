@@ -23,301 +23,299 @@ use ContaoCommunityAlliance\DcGeneral\Exception\DcGeneralInvalidArgumentExceptio
 
 class EntityModel extends AbstractModel
 {
-	/**
-	 * @var EntityInterface
-	 */
-	protected $entity;
+    /**
+     * @var EntityInterface
+     */
+    protected $entity;
 
-	/**
-	 * @var \ReflectionClass
-	 */
-	protected $reflectionClass;
+    /**
+     * @var \ReflectionClass
+     */
+    protected $reflectionClass;
 
-	/**
-	 * @var EntityAccessor
-	 */
-	protected $entityAccessor;
+    /**
+     * @var EntityAccessor
+     */
+    protected $entityAccessor;
 
-	/**
-	 * @param object $entity
-	 */
-	function __construct($entity)
-	{
-		$this->entity = $entity;
-	}
+    /**
+     * @param object $entity
+     */
+    public function __construct($entity)
+    {
+        $this->entity = $entity;
+    }
 
-	/**
-	 * @return EntityInterface
-	 */
-	public function getEntity()
-	{
-		return $this->entity;
-	}
+    /**
+     * @return EntityInterface
+     */
+    public function getEntity()
+    {
+        return $this->entity;
+    }
 
-	/**
-	 * @return \ReflectionClass
-	 */
-	protected function getReflectionClass()
-	{
-		if (!$this->reflectionClass) {
-			$this->reflectionClass = new \ReflectionClass($this->entity);
-		}
-		return $this->reflectionClass;
-	}
+    /**
+     * @return \ReflectionClass
+     */
+    protected function getReflectionClass()
+    {
+        if (!$this->reflectionClass) {
+            $this->reflectionClass = new \ReflectionClass($this->entity);
+        }
+        return $this->reflectionClass;
+    }
 
-	/**
-	 * @param \Contao\Doctrine\ORM\EntityAccessor $entityAccessor
-	 */
-	public function setEntityAccessor($entityAccessor)
-	{
-		$this->entityAccessor = $entityAccessor;
-		return $this;
-	}
+    /**
+     * @param \Contao\Doctrine\ORM\EntityAccessor $entityAccessor
+     */
+    public function setEntityAccessor($entityAccessor)
+    {
+        $this->entityAccessor = $entityAccessor;
+        return $this;
+    }
 
-	/**
-	 * @return \Contao\Doctrine\ORM\EntityAccessor
-	 */
-	public function getEntityAccessor()
-	{
-		if (!$this->entityAccessor) {
-			$this->entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
-		}
-		return $this->entityAccessor;
-	}
+    /**
+     * @return \Contao\Doctrine\ORM\EntityAccessor
+     */
+    public function getEntityAccessor()
+    {
+        if (!$this->entityAccessor) {
+            $this->entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+        }
+        return $this->entityAccessor;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getID()
-	{
-		$entity = $this->getEntity();
+    /**
+     * {@inheritdoc}
+     */
+    public function getID()
+    {
+        $entity = $this->getEntity();
 
-		if ($entity) {
-			$entityAccessor = $this->getEntityAccessor();
-			return $entityAccessor->getPrimaryKey($entity);
-		}
+        if ($entity) {
+            $entityAccessor = $this->getEntityAccessor();
+            return $entityAccessor->getPrimaryKey($entity);
+        }
 
-		return null;
-	}
+        return null;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function setID($id)
-	{
-		$entity = $this->getEntity();
+    /**
+     * {@inheritdoc}
+     */
+    public function setID($id)
+    {
+        $entity = $this->getEntity();
 
-		if ($entity) {
-			$entityAccessor = $this->getEntityAccessor();
-			$entityAccessor->setPrimaryKey($entity, $id);
-		}
-	}
+        if ($entity) {
+            $entityAccessor = $this->getEntityAccessor();
+            $entityAccessor->setPrimaryKey($entity, $id);
+        }
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getProperty($propertyName)
-	{
-		$entity = $this->getEntity();
+    /**
+     * {@inheritdoc}
+     */
+    public function getProperty($propertyName)
+    {
+        $entity = $this->getEntity();
 
-		if ($entity) {
-			$entityAccessor = $this->getEntityAccessor();
-			$value = $entityAccessor->getProperty($entity, $propertyName);
+        if ($entity) {
+            $entityAccessor = $this->getEntityAccessor();
+            $value = $entityAccessor->getProperty($entity, $propertyName);
 
-			if ($value instanceof EntityInterface) {
-				$value = $entityAccessor->getPrimaryKey($value);
-			}
+            if ($value instanceof EntityInterface) {
+                $value = $entityAccessor->getPrimaryKey($value);
+            }
 
-			if (is_resource($value)) {
-				$value = stream_get_contents($value);
-			}
+            if (is_resource($value)) {
+                $value = stream_get_contents($value);
+            }
 
-			return $value;
-		}
+            return $value;
+        }
 
-		return null;
-	}
+        return null;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function setProperty($propertyName, $propertyValue)
-	{
-		$entity = $this->getEntity();
+    /**
+     * {@inheritdoc}
+     */
+    public function setProperty($propertyName, $propertyValue)
+    {
+        $entity = $this->getEntity();
 
-		if ($entity) {
-			$entityAccessor = $this->getEntityAccessor();
-			$entityAccessor->setProperty($entity, $propertyName, $propertyValue);
-		}
+        if ($entity) {
+            $entityAccessor = $this->getEntityAccessor();
+            $entityAccessor->setProperty($entity, $propertyName, $propertyValue);
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getPropertiesAsArray()
-	{
-		$entity = $this->getEntity();
+    /**
+     * {@inheritdoc}
+     */
+    public function getPropertiesAsArray()
+    {
+        $entity = $this->getEntity();
 
-		if ($entity) {
-			$entityAccessor = $this->getEntityAccessor();
-			$values = $entityAccessor->getProperties($entity);
+        if ($entity) {
+            $entityAccessor = $this->getEntityAccessor();
+            $values = $entityAccessor->getProperties($entity);
 
-			foreach ($values as $key => $value) {
-				if ($value instanceof EntityInterface) {
-					$values[$key] = $entityAccessor->getPrimaryKey($value);
-				}
-				else if (is_resource($value)) {
-					$values[$key] = stream_get_contents($value);
-				}
-			}
+            foreach ($values as $key => $value) {
+                if ($value instanceof EntityInterface) {
+                    $values[$key] = $entityAccessor->getPrimaryKey($value);
+                } elseif (is_resource($value)) {
+                    $values[$key] = stream_get_contents($value);
+                }
+            }
 
-			return $values;
-		}
+            return $values;
+        }
 
-		return array();
-	}
+        return array();
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function setPropertiesAsArray($properties)
-	{
-		$entity = $this->getEntity();
+    /**
+     * {@inheritdoc}
+     */
+    public function setPropertiesAsArray($properties)
+    {
+        $entity = $this->getEntity();
 
-		if ($entity) {
-			$entityAccessor = $this->getEntityAccessor();
-			$entityAccessor->setProperties($entity, $properties);
-		}
+        if ($entity) {
+            $entityAccessor = $this->getEntityAccessor();
+            $entityAccessor->setProperties($entity, $properties);
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function hasProperties()
-	{
-		return (bool) $this->getEntity();
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function hasProperties()
+    {
+        return (bool) $this->getEntity();
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getDataDefinitionName()
-	{
-		$entity = $this->getEntity();
-		return $entity::entityTableName();
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function getDataDefinitionName()
+    {
+        $entity = $this->getEntity();
+        return $entity::entityTableName();
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getProviderName()
-	{
-		$entity = $this->getEntity();
-		return $entity::entityTableName();
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function getProviderName()
+    {
+        $entity = $this->getEntity();
+        return $entity::entityTableName();
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function readFromPropertyValueBag(PropertyValueBagInterface $valueBag)
-	{
-		$entity = $this->getEntity();
+    /**
+     * {@inheritDoc}
+     */
+    public function readFromPropertyValueBag(PropertyValueBagInterface $valueBag)
+    {
+        $entity = $this->getEntity();
 
-		if ($entity) {
-			$entityAccessor = $this->getEntityAccessor();
-			$properties     = $entityAccessor->getProperties($entity);
+        if ($entity) {
+            $entityAccessor = $this->getEntityAccessor();
+            $properties     = $entityAccessor->getProperties($entity);
 
-			foreach ($properties as $name => $value) {
-				if (!$valueBag->hasPropertyValue($name)) {
-					continue;
-				}
+            foreach ($properties as $name => $value) {
+                if (!$valueBag->hasPropertyValue($name)) {
+                    continue;
+                }
 
-				if ($valueBag->isPropertyValueInvalid($name)) {
-					throw new DcGeneralInvalidArgumentException('The value for property ' . $name . ' is invalid.');
-				}
+                if ($valueBag->isPropertyValueInvalid($name)) {
+                    throw new DcGeneralInvalidArgumentException('The value for property ' . $name . ' is invalid.');
+                }
 
-				$entityAccessor->setProperty(
-					$entity,
-					$name,
-					$valueBag->getPropertyValue($name)
-				);
-			}
-		}
+                $entityAccessor->setProperty(
+                    $entity,
+                    $name,
+                    $valueBag->getPropertyValue($name)
+                );
+            }
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function writeToPropertyValueBag(PropertyValueBagInterface $valueBag)
-	{
-		$entity = $this->getEntity();
+    /**
+     * {@inheritDoc}
+     */
+    public function writeToPropertyValueBag(PropertyValueBagInterface $valueBag)
+    {
+        $entity = $this->getEntity();
 
-		if ($entity) {
-			$entityAccessor = $this->getEntityAccessor();
-			$properties     = $entityAccessor->getProperties($entity);
+        if ($entity) {
+            $entityAccessor = $this->getEntityAccessor();
+            $properties     = $entityAccessor->getProperties($entity);
 
-			foreach ($properties as $name => $value) {
-				if (!$valueBag->hasPropertyValue($name)) {
-					continue;
-				}
+            foreach ($properties as $name => $value) {
+                if (!$valueBag->hasPropertyValue($name)) {
+                    continue;
+                }
 
-				if ($value instanceof EntityInterface) {
-					$value = $entityAccessor->getPrimaryKey($value);
-				}
-				else if (is_resource($value)) {
-					$value = stream_get_contents($value);
-				}
+                if ($value instanceof EntityInterface) {
+                    $value = $entityAccessor->getPrimaryKey($value);
+                } elseif (is_resource($value)) {
+                    $value = stream_get_contents($value);
+                }
 
-				$valueBag->setPropertyValue($name, $value);
-			}
-		}
+                $valueBag->setPropertyValue($name, $value);
+            }
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getIterator()
-	{
-		$entity = $this->getEntity();
+    /**
+     * {@inheritdoc}
+     */
+    public function getIterator()
+    {
+        $entity = $this->getEntity();
 
-		if ($entity) {
-			$entityAccessor = $this->getEntityAccessor();
-			$properties     = $entityAccessor->getProperties($entity);
-			return new \ArrayIterator($properties);
-		}
+        if ($entity) {
+            $entityAccessor = $this->getEntityAccessor();
+            $properties     = $entityAccessor->getProperties($entity);
+            return new \ArrayIterator($properties);
+        }
 
-		return null;
-	}
+        return null;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function __clone()
-	{
-		$entity = $this->getEntity();
+    /**
+     * {@inheritdoc}
+     */
+    public function __clone()
+    {
+        $entity = $this->getEntity();
 
-		if ($entity) {
-			$entityClass    = $this->getReflectionClass();
-			$entityAccessor = $this->getEntityAccessor();
+        if ($entity) {
+            $entityClass    = $this->getReflectionClass();
+            $entityAccessor = $this->getEntityAccessor();
 
-			// get all properties
-			$properties = $entityAccessor->getRawProperties($entity);
+            // get all properties
+            $properties = $entityAccessor->getRawProperties($entity);
 
-			// create a new entity
-			$entity = $entityClass->newInstance();
+            // create a new entity
+            $entity = $entityClass->newInstance();
 
-			// set all properties
-			$entityAccessor->setRawProperties($entity, $properties);
+            // set all properties
+            $entityAccessor->setRawProperties($entity, $properties);
 
-			$this->entity = $entity;
-		}
-	}
+            $this->entity = $entity;
+        }
+    }
 }

@@ -17,36 +17,36 @@ namespace Contao\Doctrine\ORM\Exception;
 
 class UnknownPropertyException extends \RuntimeException
 {
-	protected $entity;
+    protected $entity;
 
-	protected $propertyName;
+    protected $propertyName;
 
-	public function __construct($entity, $propertyName)
-	{
-		parent::__construct(
-			sprintf(
-				'Unknown property %s of class %s',
-				$propertyName,
-				get_class($entity)
-			)
-		);
-		$this->entity       = $entity;
-		$this->propertyName = $propertyName;
-	}
+    public function __construct($entity, $propertyName)
+    {
+        parent::__construct(
+            sprintf(
+                'Unknown property %s of class %s',
+                $propertyName,
+                get_class($entity)
+            )
+        );
+        $this->entity       = $entity;
+        $this->propertyName = $propertyName;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getEntity()
-	{
-		return $this->entity;
-	}
+    /**
+     * @return string
+     */
+    public function getEntity()
+    {
+        return $this->entity;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getPropertyName()
-	{
-		return $this->propertyName;
-	}
+    /**
+     * @return string
+     */
+    public function getPropertyName()
+    {
+        return $this->propertyName;
+    }
 }

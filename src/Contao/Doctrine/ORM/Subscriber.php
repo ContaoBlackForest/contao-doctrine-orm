@@ -27,26 +27,26 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class Subscriber implements EventSubscriberInterface
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public static function getSubscribedEvents()
-	{
-		return array(
-			'contao-twig.init' => 'initTwig',
-		);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public static function getSubscribedEvents()
+    {
+        return array(
+            'contao-twig.init' => 'initTwig',
+        );
+    }
 
-	/**
-	 * Add custom twig extension.
-	 *
-	 * @param \ContaoTwigInitializeEvent $event
-	 */
-	public function initTwig(\ContaoTwigInitializeEvent $event)
-	{
-		$contaoTwig  = $event->getContaoTwig();
-		$environment = $contaoTwig->getEnvironment();
+    /**
+     * Add custom twig extension.
+     *
+     * @param \ContaoTwigInitializeEvent $event
+     */
+    public function initTwig(\ContaoTwigInitializeEvent $event)
+    {
+        $contaoTwig  = $event->getContaoTwig();
+        $environment = $contaoTwig->getEnvironment();
 
-		$environment->addExtension(new ORMExtension());
-	}
+        $environment->addExtension(new ORMExtension());
+    }
 }

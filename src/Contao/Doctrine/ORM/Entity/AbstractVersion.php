@@ -17,8 +17,8 @@ namespace Contao\Doctrine\ORM\Entity;
 
 abstract class AbstractVersion
 {
-	public function __toString()
-	{
-		return $this->getCreatedAt()->format($GLOBALS['datimFormat']);
-	}
+    public function __toString()
+    {
+        return $this->getCreatedAt()->format($GLOBALS['datimFormat']);
+    }
 }

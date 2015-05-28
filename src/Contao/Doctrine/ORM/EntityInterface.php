@@ -22,25 +22,25 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 
 interface EntityInterface
 {
-	const REF_IGNORE = 'ignore';
+    const REF_IGNORE = 'ignore';
 
-	const REF_ID = 'id';
+    const REF_ID = 'id';
 
-	const REF_INCLUDE = 'include';
+    const REF_INCLUDE = 'include';
 
-	const REF_ARRAY = 'array';
+    const REF_ARRAY = 'array';
 
-	/**
-	 * Return the name of the table the entity is stored in.
-	 *
-	 * @return string
-	 */
-	static public function entityTableName();
+    /**
+     * Return the name of the table the entity is stored in.
+     *
+     * @return string
+     */
+    public static function entityTableName();
 
-	/**
-	 * Return a list of property names, that used as primary key.
-	 *
-	 * @return array
-	 */
-	static public function entityPrimaryKeyNames();
+    /**
+     * Return a list of property names, that used as primary key.
+     *
+     * @return array
+     */
+    public static function entityPrimaryKeyNames();
 }

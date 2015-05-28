@@ -17,5 +17,5 @@ namespace Contao\Doctrine\ORM;
 
 class EntityEvents
 {
-	const DUPLICATE_ENTITY = 'orm.duplicate-entity';
+    const DUPLICATE_ENTITY = 'orm.duplicate-entity';
 }

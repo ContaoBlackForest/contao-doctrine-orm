@@ -22,99 +22,98 @@ use ORM\Entity\Version;
 
 class VersioningListener implements EventSubscriber
 {
-	protected $versions = array();
+    protected $versions = array();
 
-	/**
-	 * Returns an array of events this subscriber wants to listen to.
-	 *
-	 * @return array
-	 */
-	public function getSubscribedEvents()
-	{
-		return array(
-			'onFlush',
-		);
-	}
+    /**
+     * Returns an array of events this subscriber wants to listen to.
+     *
+     * @return array
+     */
+    public function getSubscribedEvents()
+    {
+        return array(
+            'onFlush',
+        );
+    }
 
-	public function onFlush(OnFlushEventArgs $args)
-	{
-		$entityManager = $args->getEntityManager();
-		$unitOfWork    = $entityManager->getUnitOfWork();
+    public function onFlush(OnFlushEventArgs $args)
+    {
+        $entityManager = $args->getEntityManager();
+        $unitOfWork    = $entityManager->getUnitOfWork();
 
-		foreach ($unitOfWork->getScheduledEntityInsertions() AS $entity) {
-			$this->createVersion('insert', $entity, $args);
-		}
+        foreach ($unitOfWork->getScheduledEntityInsertions() as $entity) {
+            $this->createVersion('insert', $entity, $args);
+        }
 
-		foreach ($unitOfWork->getScheduledEntityUpdates() AS $entity) {
-			$this->createVersion('update', $entity, $args);
-		}
+        foreach ($unitOfWork->getScheduledEntityUpdates() as $entity) {
+            $this->createVersion('update', $entity, $args);
+        }
 
-		foreach ($unitOfWork->getScheduledEntityDeletions() AS $entity) {
-			$this->createVersion('delete', $entity, $args);
-		}
+        foreach ($unitOfWork->getScheduledEntityDeletions() as $entity) {
+            $this->createVersion('delete', $entity, $args);
+        }
 
-		if (count($this->versions)) {
-			$metadata = $entityManager->getClassMetadata('ORM:Version');
-			while (count($this->versions)) {
-				$version = array_shift($this->versions);
+        if (count($this->versions)) {
+            $metadata = $entityManager->getClassMetadata('ORM:Version');
+            while (count($this->versions)) {
+                $version = array_shift($this->versions);
 
-				$entityManager->persist($version);
-				$unitOfWork->computeChangeSet($metadata, $version);
-			}
-		}
-	}
+                $entityManager->persist($version);
+                $unitOfWork->computeChangeSet($metadata, $version);
+            }
+        }
+    }
 
-	protected function createVersion($action, $entity, OnFlushEventArgs $args)
-	{
-		// TODO version creation is disabled due to a lot of problems with the current serialisation format
-		return;
+    protected function createVersion($action, $entity, OnFlushEventArgs $args)
+    {
+        // TODO version creation is disabled due to a lot of problems with the current serialisation format
+        return;
 
-		try {
-			$entityManager = $args->getEntityManager();
-			if ($entity instanceof EntityInterface && !$entity instanceof Version) {
-				$changeSet = $entityManager
-					->getUnitOfWork()
-					->getEntityChangeSet($entity);
+        try {
+            $entityManager = $args->getEntityManager();
+            if ($entity instanceof EntityInterface && !$entity instanceof Version) {
+                $changeSet = $entityManager
+                    ->getUnitOfWork()
+                    ->getEntityChangeSet($entity);
 
-				/** @var EntityAccessor $entityAccessor */
-				$entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+                /** @var EntityAccessor $entityAccessor */
+                $entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
 
-				$originalData = $entityAccessor->getRawProperties($entity);
-				// restore original values
-				foreach ($changeSet as $field => $change) {
-					$originalData[$field] = $change[0];
-				}
+                $originalData = $entityAccessor->getRawProperties($entity);
+                // restore original values
+                foreach ($changeSet as $field => $change) {
+                    $originalData[$field] = $change[0];
+                }
 
-				/** @var VersionManager $versionManager */
-				$versionManager = $GLOBALS['container']['doctrine.orm.versionManager'];
+                /** @var VersionManager $versionManager */
+                $versionManager = $GLOBALS['container']['doctrine.orm.versionManager'];
 
-				/** @var Version $previousVersion */
-				$previousVersion = $versionManager->findVersion($entity, $originalData);
+                /** @var Version $previousVersion */
+                $previousVersion = $versionManager->findVersion($entity, $originalData);
 
-				/** @var Serializer $serializer */
-				$serializer = $GLOBALS['container']['doctrine.orm.entitySerializer'];
+                /** @var Serializer $serializer */
+                $serializer = $GLOBALS['container']['doctrine.orm.entitySerializer'];
 
-				$version = new Version();
-				$version->setEntityClass(Helper::createShortenEntityName($entity));
-				$version->setEntityId($entityAccessor->getPrimaryKey($entity));
-				$version->setEntityHash(VersionManager::calculateHash($entity));
-				$version->setAction($action);
-				$version->setPrevious($previousVersion ? $previousVersion->getId() : null);
-				$version->setData($serializer->serialize($entity, 'json'));
-				$version->setChanges($serializer->serialize($changeSet, 'json'));
+                $version = new Version();
+                $version->setEntityClass(Helper::createShortenEntityName($entity));
+                $version->setEntityId($entityAccessor->getPrimaryKey($entity));
+                $version->setEntityHash(VersionManager::calculateHash($entity));
+                $version->setAction($action);
+                $version->setPrevious($previousVersion ? $previousVersion->getId() : null);
+                $version->setData($serializer->serialize($entity, 'json'));
+                $version->setChanges($serializer->serialize($changeSet, 'json'));
 
-				if (BE_USER_LOGGED_IN) {
-					$user = \BackendUser::getInstance();
-					$version->setUserId($user->id);
-					$version->setUsername($user->username);
-				}
+                if (BE_USER_LOGGED_IN) {
+                    $user = \BackendUser::getInstance();
+                    $version->setUserId($user->id);
+                    $version->setUsername($user->username);
+                }
 
-				$this->versions[] = $version;
-			}
-		}
-		catch (\Exception $e) {
-			// silently ignore
-			// TODO work around binary data
-		}
-	}
+                $this->versions[] = $version;
+            }
+        } catch (\Exception $e) {
+            // silently ignore
+            // TODO work around binary data
+        }
+    }
 }

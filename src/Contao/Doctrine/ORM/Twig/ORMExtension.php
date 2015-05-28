@@ -25,39 +25,39 @@ use ContaoCommunityAlliance\DcGeneral\EnvironmentInterface;
  */
 class ORMExtension extends \Twig_Extension
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getName()
-	{
-		return 'doctrine-orm';
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function getName()
+    {
+        return 'doctrine-orm';
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getFilters()
-	{
-		return array(
-			new \Twig_SimpleFilter('serializeEntityId', array($this, 'serializeEntityId')),
-		);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function getFilters()
+    {
+        return array(
+            new \Twig_SimpleFilter('serializeEntityId', array($this, 'serializeEntityId')),
+        );
+    }
 
-	/**
-	 * Serialize an entity and return its ID.
-	 *
-	 * @param EntityInterface $entity
-	 *
-	 * @return string
-	 */
-	public function serializeEntityId(EntityInterface $entity)
-	{
-		/** @var EntityAccessor $entityAccessor */
-		$entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+    /**
+     * Serialize an entity and return its ID.
+     *
+     * @param EntityInterface $entity
+     *
+     * @return string
+     */
+    public function serializeEntityId(EntityInterface $entity)
+    {
+        /** @var EntityAccessor $entityAccessor */
+        $entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
 
-		$serializer = new IdSerializer();
-		$serializer->setDataProviderName($entity->entityTableName());
-		$serializer->setId($entityAccessor->getPrimaryKey($entity));
-		return $serializer->getSerialized();
-	}
+        $serializer = new IdSerializer();
+        $serializer->setDataProviderName($entity->entityTableName());
+        $serializer->setId($entityAccessor->getPrimaryKey($entity));
+        return $serializer->getSerialized();
+    }
 }

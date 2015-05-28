@@ -22,134 +22,130 @@ use Doctrine\ORM\QueryBuilder;
 
 class Helper
 {
-	/**
-	 * Extend a query with a where constraint on the id of an entity.
-	 *
-	 * @param QueryBuilder     $queryBuilder
-	 * @param mixed            $id
-	 * @param EntityInterface  $entity
-	 * @param bool             $singleton
-	 * @param \ReflectionClass $entityClass
-	 *
-	 * @throws \RuntimeException
-	 */
-	static public function extendQueryWhereId(
-		QueryBuilder $queryBuilder,
-		$id,
-		$entity,
-		$singleton = false,
-		\ReflectionClass $entityClass = null
-	) {
-		if (!$entityClass) {
-			$entityClass = new \ReflectionClass($entity);
-		}
+    /**
+     * Extend a query with a where constraint on the id of an entity.
+     *
+     * @param QueryBuilder     $queryBuilder
+     * @param mixed            $id
+     * @param EntityInterface  $entity
+     * @param bool             $singleton
+     * @param \ReflectionClass $entityClass
+     *
+     * @throws \RuntimeException
+     */
+    public static function extendQueryWhereId(
+        QueryBuilder $queryBuilder,
+        $id,
+        $entity,
+        $singleton = false,
+        \ReflectionClass $entityClass = null
+    ) {
+        if (!$entityClass) {
+            $entityClass = new \ReflectionClass($entity);
+        }
 
-		if ($entityClass->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
-			$keys = $entityClass
-				->getMethod('entityPrimaryKeyNames')
-				->invoke(null);
-		}
-		else {
-			$keys = array('id');
-		}
+        if ($entityClass->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
+            $keys = $entityClass
+                ->getMethod('entityPrimaryKeyNames')
+                ->invoke(null);
+        } else {
+            $keys = array('id');
+        }
 
-		$idValues = is_array($id) ? $id : explode('|', $id);
+        $idValues = is_array($id) ? $id : explode('|', $id);
 
-		if (count($keys) != count($idValues)) {
-			throw new \RuntimeException(
-				sprintf(
-					'Key count of %d does not match id values count %d',
-					count($keys),
-					count($idValues)
-				)
-			);
-		}
+        if (count($keys) != count($idValues)) {
+            throw new \RuntimeException(
+                sprintf(
+                    'Key count of %d does not match id values count %d',
+                    count($keys),
+                    count($idValues)
+                )
+            );
+        }
 
-		foreach ($keys as $index => $key) {
-			$where = $queryBuilder
-				->expr()
-				->neq('e.' . $key, ':key' . $index);
+        foreach ($keys as $index => $key) {
+            $where = $queryBuilder
+                ->expr()
+                ->neq('e.' . $key, ':key' . $index);
 
-			if ($index > 0 || !$singleton) {
-				$queryBuilder->andWhere($where);
-			}
-			else {
-				$queryBuilder->where($where);
-			}
+            if ($index > 0 || !$singleton) {
+                $queryBuilder->andWhere($where);
+            } else {
+                $queryBuilder->where($where);
+            }
 
-			$queryBuilder->setParameter(':key' . $index, $idValues[$index]);
-		}
-	}
+            $queryBuilder->setParameter(':key' . $index, $idValues[$index]);
+        }
+    }
 
-	/**
-	 * Auto-Generate an alias for an entity.
-	 *
-	 * @param string      $alias
-	 * @param \DC_General $dc
-	 *
-	 * @return string
-	 * @throws Exception
-	 */
-	static public function generateAlias($alias, \DC_General $dc)
-	{
-		/** @var EntityInterface $entity */
-		$entity    = $dc
-			->getCurrentModel()
-			->getEntity();
-		$autoAlias = false;
+    /**
+     * Auto-Generate an alias for an entity.
+     *
+     * @param string      $alias
+     * @param \DC_General $dc
+     *
+     * @return string
+     * @throws Exception
+     */
+    public static function generateAlias($alias, \DC_General $dc)
+    {
+        /** @var EntityInterface $entity */
+        $entity    = $dc
+            ->getCurrentModel()
+            ->getEntity();
+        $autoAlias = false;
 
-		// Generate alias if there is none
-		if (!strlen($alias)) {
-			$autoAlias = true;
+        // Generate alias if there is none
+        if (!strlen($alias)) {
+            $autoAlias = true;
 
-			if ($entity->__has('title')) {
-				$alias = standardize($entity->getTitle());
-			}
-			else if ($entity->__has('name')) {
-				$alias = standardize($entity->getName());
-			}
-			else {
-				return '';
-			}
-		}
+            if ($entity->__has('title')) {
+                $alias = standardize($entity->getTitle());
+            } elseif ($entity->__has('name')) {
+                $alias = standardize($entity->getName());
+            } else {
+                return '';
+            }
+        }
 
-		$entityClass = new \ReflectionClass($entity);
-		$keys        = explode(',', $entityClass->getConstant('KEY'));
+        $entityClass = new \ReflectionClass($entity);
+        $keys        = explode(',', $entityClass->getConstant('KEY'));
 
-		$entityManager = EntityHelper::getEntityManager();
-		$queryBuilder  = $entityManager->createQueryBuilder();
-		$queryBuilder
-			->select('COUNT(e.' . $keys[0] . ')')
-			->from($entityClass->getName(), 'e')
-			->where(
-				$queryBuilder
-					->expr()
-					->eq('e.alias', ':alias')
-			)
-			->setParameter(':alias', $alias);
-		static::extendQueryWhereId(
-			$queryBuilder,
-			$dc
-				->getCurrentModel()
-				->getID(),
-			$entity
-		);
-		$query          = $queryBuilder->getQuery();
-		$duplicateCount = $query->getResult(Query::HYDRATE_SINGLE_SCALAR);
+        $entityManager = EntityHelper::getEntityManager();
+        $queryBuilder  = $entityManager->createQueryBuilder();
+        $queryBuilder
+            ->select('COUNT(e.' . $keys[0] . ')')
+            ->from($entityClass->getName(), 'e')
+            ->where(
+                $queryBuilder
+                    ->expr()
+                    ->eq('e.alias', ':alias')
+            )
+            ->setParameter(':alias', $alias);
+        static::extendQueryWhereId(
+            $queryBuilder,
+            $dc
+                ->getCurrentModel()
+                ->getID(),
+            $entity
+        );
+        $query          = $queryBuilder->getQuery();
+        $duplicateCount = $query->getResult(Query::HYDRATE_SINGLE_SCALAR);
 
-		// Check whether the news alias exists
-		if ($duplicateCount && !$autoAlias) {
-			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasExists'], $alias));
-		}
+        // Check whether the news alias exists
+        if ($duplicateCount && !$autoAlias) {
+            throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasExists'], $alias));
+        }
 
-		// Add ID to alias
-		if ($duplicateCount && $autoAlias) {
-			$alias .= '-' . $dc
-					->getCurrentModel()
-					->getID();
-		}
+        // Add ID to alias
+        if ($duplicateCount && $autoAlias) {
+            $alias .= '-' . $dc
+                    ->getCurrentModel()
+                    ->getID();
+        }
 
-		return $alias;
+        return $alias;
 
-	}
+    }
 }

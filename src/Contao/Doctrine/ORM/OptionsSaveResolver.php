@@ -17,54 +17,53 @@ namespace Contao\Doctrine\ORM;
 
 class OptionsSaveResolver
 {
-	static protected $instance;
+    static protected $instance;
 
-	static public function getInstance()
-	{
-		if (static::$instance === null) {
-			static::$instance = new static();
-		}
+    public static function getInstance()
+    {
+        if (static::$instance === null) {
+            static::$instance = new static();
+        }
 
-		return static::$instance;
-	}
+        return static::$instance;
+    }
 
-	static protected $entityClassNames;
+    static protected $entityClassNames;
 
-	static public function create($entityClassName)
-	{
-		do {
-			$methodName = uniqid('func_');
-		}
-		while (isset(static::$entityClassNames[$methodName]));
+    public static function create($entityClassName)
+    {
+        do {
+            $methodName = uniqid('func_');
+        } while (isset(static::$entityClassNames[$methodName]));
 
-		static::$entityClassNames[$methodName] = $entityClassName;
+        static::$entityClassNames[$methodName] = $entityClassName;
 
-		return array(
-			'Contao\Doctrine\ORM\OptionsSaveResolver',
-			$methodName
-		);
-	}
+        return array(
+            'Contao\Doctrine\ORM\OptionsSaveResolver',
+            $methodName
+        );
+    }
 
-	/**
-	 * @param string $methodName
-	 * @param array  $args
-	 */
-	public function __call($methodName, array $args)
-	{
-		if (isset(static::$entityClassNames[$methodName])) {
-			$className  = static::$entityClassNames[$methodName];
-			$repository = EntityHelper::getRepository($className);
-			$entities   = array();
-			$ids        = $args[0];
+    /**
+     * @param string $methodName
+     * @param array  $args
+     */
+    public function __call($methodName, array $args)
+    {
+        if (isset(static::$entityClassNames[$methodName])) {
+            $className  = static::$entityClassNames[$methodName];
+            $repository = EntityHelper::getRepository($className);
+            $entities   = array();
+            $ids        = $args[0];
 
-			foreach ($ids as $id) {
-				$id         = EntityHelper::parseCombinedId($className, $id);
-				$entities[] = $repository->find($id);
-			}
+            foreach ($ids as $id) {
+                $id         = EntityHelper::parseCombinedId($className, $id);
+                $entities[] = $repository->find($id);
+            }
 
-			return $entities;
-		}
+            return $entities;
+        }
 
-		throw new \RuntimeException('No save options resolver class found for ' . $methodName);
-	}
+        throw new \RuntimeException('No save options resolver class found for ' . $methodName);
+    }
 }

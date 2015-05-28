@@ -29,53 +29,53 @@ use Symfony\Component\Serializer\Normalizer\SerializerAwareNormalizer;
 
 class EntitySubscribingHandler implements SubscribingHandlerInterface
 {
-	public static function getSubscribingMethods()
-	{
-		return array(
-			array(
-				'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
-				'format'    => 'json',
-				'type'      => 'Contao\Doctrine\ORM\EntityInterface',
-				'method'    => 'serializeEntity',
-			),
-			array(
-				'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
-				'format'    => 'json',
-				'type'      => 'Contao\Doctrine\ORM\EntityInterface',
-				'method'    => 'deserializeEntity',
-			),
-		);
-	}
+    public static function getSubscribingMethods()
+    {
+        return array(
+            array(
+                'direction' => GraphNavigator::DIRECTION_SERIALIZATION,
+                'format'    => 'json',
+                'type'      => 'Contao\Doctrine\ORM\EntityInterface',
+                'method'    => 'serializeEntity',
+            ),
+            array(
+                'direction' => GraphNavigator::DIRECTION_DESERIALIZATION,
+                'format'    => 'json',
+                'type'      => 'Contao\Doctrine\ORM\EntityInterface',
+                'method'    => 'deserializeEntity',
+            ),
+        );
+    }
 
-	public function serializeEntity(
-		JsonSerializationVisitor $visitor,
-		EntityInterface $entity,
-		array $type,
-		Context $context
-	) {
-		/** @var EntityAccessor $entityAccessor */
-		$entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+    public function serializeEntity(
+        JsonSerializationVisitor $visitor,
+        EntityInterface $entity,
+        array $type,
+        Context $context
+    ) {
+        /** @var EntityAccessor $entityAccessor */
+        $entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
 
-		$properties              = $entityAccessor->getRawProperties($entity);
-		$properties['__ENTITY_CLASS__'] = get_class($entity);
-		$properties              = $visitor->visitArray($properties, $type, $context);
+        $properties              = $entityAccessor->getRawProperties($entity);
+        $properties['__ENTITY_CLASS__'] = get_class($entity);
+        $properties              = $visitor->visitArray($properties, $type, $context);
 
-		return $properties;
-	}
+        return $properties;
+    }
 
-	public function deserializeEntity(JsonSerializationVisitor $visitor, $properties, array $type, Context $context)
-	{
-		/** @var EntityAccessor $entityAccessor */
-		$entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+    public function deserializeEntity(JsonSerializationVisitor $visitor, $properties, array $type, Context $context)
+    {
+        /** @var EntityAccessor $entityAccessor */
+        $entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
 
-		$entityClassName = $properties['__ENTITY_CLASS__'];
-		$entityClass     = new \ReflectionClass($entityClassName);
-		$entity          = $entityClass->newInstance();
+        $entityClassName = $properties['__ENTITY_CLASS__'];
+        $entityClass     = new \ReflectionClass($entityClassName);
+        $entity          = $entityClass->newInstance();
 
-		unset($properties['__ENTITY_CLASS__']);
-		$properties = $visitor->visitArray($properties, $type, $context);
-		$entityAccessor->setRawProperties($entity, $properties);
+        unset($properties['__ENTITY_CLASS__']);
+        $properties = $visitor->visitArray($properties, $type, $context);
+        $entityAccessor->setRawProperties($entity, $properties);
 
-		return $entity;
-	}
+        return $entity;
+    }
 }

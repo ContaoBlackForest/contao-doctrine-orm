@@ -25,36 +25,35 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class GenerateProxiesCommand extends Command
 {
-	protected function configure()
-	{
-		$this
-			->setName('doctrine:orm:generate-proxies')
-			->setDescription('Generates proxy classes for entity classes.');
-	}
+    protected function configure()
+    {
+        $this
+            ->setName('doctrine:orm:generate-proxies')
+            ->setDescription('Generates proxy classes for entity classes.');
+    }
 
-	protected function execute(InputInterface $input, OutputInterface $output)
-	{
-		global $container;
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        global $container;
 
-		/** @var string $cacheDir */
-		$cacheDir = $container['doctrine.orm.proxiesCacheDir'];
+        /** @var string $cacheDir */
+        $cacheDir = $container['doctrine.orm.proxiesCacheDir'];
 
-		$iterator = new \RecursiveIteratorIterator(
-			new \RecursiveDirectoryIterator($cacheDir, \FilesystemIterator::SKIP_DOTS),
-			\RecursiveIteratorIterator::CHILD_FIRST
-		);
-		/** @var \SplFileInfo $file */
-		foreach ($iterator as $file) {
-			if ($file->isDir()) {
-				rmdir($file);
-			}
-			else {
-				unlink($file);
-			}
-		}
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($cacheDir, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+        /** @var \SplFileInfo $file */
+        foreach ($iterator as $file) {
+            if ($file->isDir()) {
+                rmdir($file);
+            } else {
+                unlink($file);
+            }
+        }
 
-		/** @var EntityManager $entityManager */
-		$entityManager = $container['doctrine.orm.entityManager'];
+        /** @var EntityManager $entityManager */
+        $entityManager = $container['doctrine.orm.entityManager'];
 
         $metadatas = $entityManager->getMetadataFactory()->getAllMetadata();
 
@@ -67,5 +66,5 @@ class GenerateProxiesCommand extends Command
         } else {
             $output->write('No Metadata Classes to process.' . PHP_EOL);
         }
-	}
+    }
 }

@@ -20,7 +20,7 @@ namespace Contao\Doctrine\ORM\Annotation;
  */
 class Accessor
 {
-	public $ignore = false;
+    public $ignore = false;
 
-	public $name = null;
+    public $name = null;
 }

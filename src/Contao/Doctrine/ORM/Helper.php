@@ -20,168 +20,158 @@ use Doctrine\ORM\QueryBuilder;
 
 class Helper
 {
-	/**
-	 * Extend a query with a where constraint on the id of an entity.
-	 *
-	 * @param QueryBuilder     $queryBuilder
-	 * @param mixed            $id
-	 * @param EntityInterface  $entity
-	 * @param bool             $standalone
-	 * @param \ReflectionClass $entityClass
-	 *
-	 * @throws \RuntimeException
-	 */
-	static public function extendQueryWhereId(
-		QueryBuilder $queryBuilder,
-		EntityInterface $entity,
-		$standalone = false,
-		\ReflectionClass $entityClass = null
-	) {
-		/** @var EntityAccessor $entityAccessor */
-		$entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+    /**
+     * Extend a query with a where constraint on the id of an entity.
+     *
+     * @param QueryBuilder     $queryBuilder
+     * @param mixed            $id
+     * @param EntityInterface  $entity
+     * @param bool             $standalone
+     * @param \ReflectionClass $entityClass
+     *
+     * @throws \RuntimeException
+     */
+    public static function extendQueryWhereId(
+        QueryBuilder $queryBuilder,
+        EntityInterface $entity,
+        $standalone = false,
+        \ReflectionClass $entityClass = null
+    ) {
+        /** @var EntityAccessor $entityAccessor */
+        $entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
 
-		if (!$entityClass) {
-			$entityClass = new \ReflectionClass($entity);
-		}
+        if (!$entityClass) {
+            $entityClass = new \ReflectionClass($entity);
+        }
 
-		if ($entityClass->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
-			$keys = $entityClass
-				->getMethod('entityPrimaryKeyNames')
-				->invoke(null);
-		}
-		else {
-			$keys = array('id');
-		}
+        if ($entityClass->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
+            $keys = $entityClass
+                ->getMethod('entityPrimaryKeyNames')
+                ->invoke(null);
+        } else {
+            $keys = array('id');
+        }
 
-		foreach ($keys as $index => $key) {
-			$value = $entityAccessor->getProperty($entity, $key);
+        foreach ($keys as $index => $key) {
+            $value = $entityAccessor->getProperty($entity, $key);
 
-			if ($value !== null) {
-				$where = $queryBuilder
-					->expr()
-					->neq('e.' . $key, ':key' . $index);
-				$queryBuilder->setParameter(':key' . $index, $value);
-			}
-			else {
-				$where = $queryBuilder
-					->expr()
-					->isNotNull('e.' . $key);
-			}
+            if ($value !== null) {
+                $where = $queryBuilder
+                    ->expr()
+                    ->neq('e.' . $key, ':key' . $index);
+                $queryBuilder->setParameter(':key' . $index, $value);
+            } else {
+                $where = $queryBuilder
+                    ->expr()
+                    ->isNotNull('e.' . $key);
+            }
 
-			if ($index > 0 || !$standalone) {
-				$queryBuilder->andWhere($where);
-			}
-			else {
-				$queryBuilder->where($where);
-			}
-		}
-	}
+            if ($index > 0 || !$standalone) {
+                $queryBuilder->andWhere($where);
+            } else {
+                $queryBuilder->where($where);
+            }
+        }
+    }
 
-	/**
-	 * Auto-Generate an alias for an entity.
-	 *
-	 * @param string          $alias
-	 * @param EntityInterface $entity
-	 *
-	 * @return string
-	 * @throws \Exception
-	 */
-	static public function generateAlias($alias, $entity, $baseField = false)
-	{
-		$customAlias = (bool) $alias;
-		$turn = 0;
+    /**
+     * Auto-Generate an alias for an entity.
+     *
+     * @param string          $alias
+     * @param EntityInterface $entity
+     *
+     * @return string
+     * @throws \Exception
+     */
+    public static function generateAlias($alias, $entity, $baseField = false)
+    {
+        $customAlias = (bool) $alias;
+        $turn = 0;
 
-		do {
-			// Generate alias if there is none
-			if (!strlen($alias)) {
-				/** @var EntityAccessor $entityAccessor */
-				$entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
+        do {
+            // Generate alias if there is none
+            if (!strlen($alias)) {
+                /** @var EntityAccessor $entityAccessor */
+                $entityAccessor = $GLOBALS['container']['doctrine.orm.entityAccessor'];
 
-				if ($baseField) {
-					$alias = standardize($entityAccessor->getProperty($entity, $baseField));
-				}
-				else if ($entity instanceof AliasableInterface) {
-					$alias = standardize($entity->getAliasParentValue());
-				}
-				else if ($entityAccessor->hasProperty($entity, 'title')) {
-					$alias = standardize($entityAccessor->getProperty($entity, 'title'));
-				}
-				else if ($entityAccessor->hasProperty($entity, 'name')) {
-					$alias = standardize($entityAccessor->getProperty($entity, 'name'));
-				}
-				else {
-					throw new \RuntimeException('Cannot generate alias, do not know which field should used!');
-				}
-			}
+                if ($baseField) {
+                    $alias = standardize($entityAccessor->getProperty($entity, $baseField));
+                } elseif ($entity instanceof AliasableInterface) {
+                    $alias = standardize($entity->getAliasParentValue());
+                } elseif ($entityAccessor->hasProperty($entity, 'title')) {
+                    $alias = standardize($entityAccessor->getProperty($entity, 'title'));
+                } elseif ($entityAccessor->hasProperty($entity, 'name')) {
+                    $alias = standardize($entityAccessor->getProperty($entity, 'name'));
+                } else {
+                    throw new \RuntimeException('Cannot generate alias, do not know which field should used!');
+                }
+            }
 
-			if ($turn > 0) {
-				$alias .= '-' . $turn;
-			}
+            if ($turn > 0) {
+                $alias .= '-' . $turn;
+            }
 
-			$entityClass = new \ReflectionClass($entity);
+            $entityClass = new \ReflectionClass($entity);
 
-			if ($entityClass->hasConstant('PRIMARY_KEY')) {
-				$keys = explode(',', $entityClass->getConstant('PRIMARY_KEY'));
-			}
-			else {
-				$keys = array('id');
-			}
+            if ($entityClass->hasConstant('PRIMARY_KEY')) {
+                $keys = explode(',', $entityClass->getConstant('PRIMARY_KEY'));
+            } else {
+                $keys = array('id');
+            }
 
-			$entityManager = EntityHelper::getEntityManager();
-			$queryBuilder  = $entityManager->createQueryBuilder();
-			$queryBuilder
-				->select('COUNT(e.' . $keys[0] . ')')
-				->from($entityClass->getName(), 'e')
-				->where(
-					$queryBuilder
-						->expr()
-						->eq('e.alias', ':alias')
-				)
-				->setParameter(':alias', $alias);
-			static::extendQueryWhereId(
-				$queryBuilder,
-				$entity
-			);
-			$query          = $queryBuilder->getQuery();
-			$duplicateCount = $query->getResult(Query::HYDRATE_SINGLE_SCALAR);
+            $entityManager = EntityHelper::getEntityManager();
+            $queryBuilder  = $entityManager->createQueryBuilder();
+            $queryBuilder
+                ->select('COUNT(e.' . $keys[0] . ')')
+                ->from($entityClass->getName(), 'e')
+                ->where(
+                    $queryBuilder
+                        ->expr()
+                        ->eq('e.alias', ':alias')
+                )
+                ->setParameter(':alias', $alias);
+            static::extendQueryWhereId(
+                $queryBuilder,
+                $entity
+            );
+            $query          = $queryBuilder->getQuery();
+            $duplicateCount = $query->getResult(Query::HYDRATE_SINGLE_SCALAR);
 
-			// Check whether the news alias exists
-			if ($duplicateCount && $customAlias) {
-				throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasExists'], $alias));
-			}
+            // Check whether the news alias exists
+            if ($duplicateCount && $customAlias) {
+                throw new \Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasExists'], $alias));
+            }
 
-			$turn ++;
-		}
-		while ($duplicateCount);
+            $turn ++;
+        } while ($duplicateCount);
 
-		return $alias;
-	}
+        return $alias;
+    }
 
-	static public function createShortenEntityName($entity)
-	{
-		static $namespaceMap;
-		if (!$namespaceMap) {
-			if (array_key_exists('DOCTRINE_ENTITY_NAMESPACE_ALIAS', $GLOBALS)) {
-				$namespaceMap = array_flip($GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS']);
-			}
-			else {
-				$namespaceMap = array();
-			}
-		}
+    public static function createShortenEntityName($entity)
+    {
+        static $namespaceMap;
+        if (!$namespaceMap) {
+            if (array_key_exists('DOCTRINE_ENTITY_NAMESPACE_ALIAS', $GLOBALS)) {
+                $namespaceMap = array_flip($GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS']);
+            } else {
+                $namespaceMap = array();
+            }
+        }
 
-		static $preg;
-		if (!$preg) {
-			$classes = array_keys($namespaceMap);
-			$classes = array_map('preg_quote', $classes);
-			$preg    = '~^(' . implode('|', $classes) . ')\\\\(.*)$~s';
-		}
+        static $preg;
+        if (!$preg) {
+            $classes = array_keys($namespaceMap);
+            $classes = array_map('preg_quote', $classes);
+            $preg    = '~^(' . implode('|', $classes) . ')\\\\(.*)$~s';
+        }
 
-		$className = is_object($entity) ? get_class($entity) : (string) $entity;
+        $className = is_object($entity) ? get_class($entity) : (string) $entity;
 
-		if (preg_match($preg, $className, $matches)) {
-			$className = $namespaceMap[$matches[1]] . ':' . $matches[2];
-		}
+        if (preg_match($preg, $className, $matches)) {
+            $className = $namespaceMap[$matches[1]] . ':' . $matches[2];
+        }
 
-		return $className;
-	}
+        return $className;
+    }
 }

@@ -19,123 +19,122 @@ use Doctrine\ORM\EntityManager;
 
 class EntityHelper
 {
-	/**
-	 * @return EntityAccessor
-	 */
-	static public function getEntityAccessor()
-	{
-		return $GLOBALS['container']['doctrine.orm.entityAccessor'];
-	}
+    /**
+     * @return EntityAccessor
+     */
+    public static function getEntityAccessor()
+    {
+        return $GLOBALS['container']['doctrine.orm.entityAccessor'];
+    }
 
-	/**
-	 * @return EntityManager
-	 */
-	static public function getEntityManager()
-	{
-		return $GLOBALS['container']['doctrine.orm.entityManager'];
-	}
+    /**
+     * @return EntityManager
+     */
+    public static function getEntityManager()
+    {
+        return $GLOBALS['container']['doctrine.orm.entityManager'];
+    }
 
-	/**
-	 * @param string $className
-	 *
-	 * @return \Doctrine\ORM\EntityRepository
-	 */
-	static public function getRepository($className)
-	{
-		$entityManager = static::getEntityManager();
-		return $entityManager->getRepository($className);
-	}
+    /**
+     * @param string $className
+     *
+     * @return \Doctrine\ORM\EntityRepository
+     */
+    public static function getRepository($className)
+    {
+        $entityManager = static::getEntityManager();
+        return $entityManager->getRepository($className);
+    }
 
-	/**
-	 * Search an entity by an combined id, fetched by Entity::id()
-	 *
-	 * @param \ReflectionClass|string $class
-	 * @param string                  $combinedId
-	 *
-	 * @return EntityInterface|null
-	 */
-	static public function parseCombinedId($class, $combinedId)
-	{
-		if (($pos = strpos($class, ':')) !== false) {
-			$alias = substr($class, 0, $pos);
-			if (isset($GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS'][$alias])) {
-				$namespace = $GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS'][$alias];
-				$class     = $namespace . '\\' . substr($class, $pos + 1);
-			}
-		}
+    /**
+     * Search an entity by an combined id, fetched by Entity::id()
+     *
+     * @param \ReflectionClass|string $class
+     * @param string                  $combinedId
+     *
+     * @return EntityInterface|null
+     */
+    public static function parseCombinedId($class, $combinedId)
+    {
+        if (($pos = strpos($class, ':')) !== false) {
+            $alias = substr($class, 0, $pos);
+            if (isset($GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS'][$alias])) {
+                $namespace = $GLOBALS['DOCTRINE_ENTITY_NAMESPACE_ALIAS'][$alias];
+                $class     = $namespace . '\\' . substr($class, $pos + 1);
+            }
+        }
 
-		if (!$class instanceof \ReflectionClass) {
-			$class = new \ReflectionClass($class);
-		}
+        if (!$class instanceof \ReflectionClass) {
+            $class = new \ReflectionClass($class);
+        }
 
-		if ($class->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
-			$keys = $class
-				->getMethod('entityPrimaryKeyNames')
-				->invoke(null);
-		}
-		else {
-			$keys = array('id');
-		}
+        if ($class->isSubclassOf('Contao\Doctrine\ORM\EntityInterface')) {
+            $keys = $class
+                ->getMethod('entityPrimaryKeyNames')
+                ->invoke(null);
+        } else {
+            $keys = array('id');
+        }
 
-		$ids      = explode('|', $combinedId);
-		$criteria = array_combine($keys, $ids);
+        $ids      = explode('|', $combinedId);
+        $criteria = array_combine($keys, $ids);
 
-		return $criteria;
-	}
+        return $criteria;
+    }
 
-	/**
-	 * Search an entity by an combined id, fetched by Entity::id()
-	 *
-	 * @param \ReflectionClass|string $class
-	 * @param string                  $combinedId
-	 *
-	 * @return EntityInterface|null
-	 */
-	static public function findByCombinedId($class, $combinedId)
-	{
-		$criteria = static::parseCombinedId($class, $combinedId);
+    /**
+     * Search an entity by an combined id, fetched by Entity::id()
+     *
+     * @param \ReflectionClass|string $class
+     * @param string                  $combinedId
+     *
+     * @return EntityInterface|null
+     */
+    public static function findByCombinedId($class, $combinedId)
+    {
+        $criteria = static::parseCombinedId($class, $combinedId);
 
-		$repository = static::getRepository($class->getName());
-		$entity     = $repository->findOneBy($criteria);
+        $repository = static::getRepository($class->getName());
+        $entity     = $repository->findOneBy($criteria);
 
-		return $entity;
-	}
+        return $entity;
+    }
 
-	/**
-	 * Call load callbacks
-	 *
-	 * @param string $field
-	 * @param mixed  $value
-	 *
-	 * @return mixed
-	 */
-	static public function callGetterCallbacks($entity, $table, $field, $value)
-	{
-		if (isset($GLOBALS['TL_DCA'][$table]['fields'][$field]['getter_callback'])) {
-			$callbacks = (array) $GLOBALS['TL_DCA'][$table]['fields'][$field]['getter_callback'];
-			foreach ($callbacks as $callback) {
-				$value = call_user_func($callback, $value, $entity);
-			}
-		}
-		return $value;
-	}
+    /**
+     * Call load callbacks
+     *
+     * @param string $field
+     * @param mixed  $value
+     *
+     * @return mixed
+     */
+    public static function callGetterCallbacks($entity, $table, $field, $value)
+    {
+        if (isset($GLOBALS['TL_DCA'][$table]['fields'][$field]['getter_callback'])) {
+            $callbacks = (array) $GLOBALS['TL_DCA'][$table]['fields'][$field]['getter_callback'];
+            foreach ($callbacks as $callback) {
+                $value = call_user_func($callback, $value, $entity);
+            }
+        }
+        return $value;
+    }
 
-	/**
-	 * Call save callbacks
-	 *
-	 * @param string $field
-	 * @param mixed  $value
-	 *
-	 * @return mixed
-	 */
-	static public function callSetterCallbacks($entity, $table, $field, $value)
-	{
-		if (isset($GLOBALS['TL_DCA'][$table]['fields'][$field]['setter_callback'])) {
-			$callbacks = (array) $GLOBALS['TL_DCA'][$table]['fields'][$field]['setter_callback'];
-			foreach ($callbacks as $callback) {
-				$value = call_user_func($callback, $value, $entity);
-			}
-		}
-		return $value;
-	}
+    /**
+     * Call save callbacks
+     *
+     * @param string $field
+     * @param mixed  $value
+     *
+     * @return mixed
+     */
+    public static function callSetterCallbacks($entity, $table, $field, $value)
+    {
+        if (isset($GLOBALS['TL_DCA'][$table]['fields'][$field]['setter_callback'])) {
+            $callbacks = (array) $GLOBALS['TL_DCA'][$table]['fields'][$field]['setter_callback'];
+            foreach ($callbacks as $callback) {
+                $value = call_user_func($callback, $value, $entity);
+            }
+        }
+        return $value;
+    }
 }

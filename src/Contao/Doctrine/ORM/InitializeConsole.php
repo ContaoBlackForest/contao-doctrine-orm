@@ -21,28 +21,28 @@ use Symfony\Component\Console\Helper\Helper;
 
 class InitializeConsole extends Helper
 {
-	/**
-	 * @param Application $application
-	 */
-	public function hookInitializeConsole($application)
-	{
-		$application->getHelperSet()->set($this);
-	}
+    /**
+     * @param Application $application
+     */
+    public function hookInitializeConsole($application)
+    {
+        $application->getHelperSet()->set($this);
+    }
 
-	/**
-	 * Returns the canonical name of this helper.
-	 *
-	 * @return string The canonical name
-	 *
-	 * @api
-	 */
-	public function getName()
-	{
-		return 'em';
-	}
+    /**
+     * Returns the canonical name of this helper.
+     *
+     * @return string The canonical name
+     *
+     * @api
+     */
+    public function getName()
+    {
+        return 'em';
+    }
 
-	public function getEntityManager()
-	{
-		return $GLOBALS['container']['doctrine.orm.entityManager'];
-	}
+    public function getEntityManager()
+    {
+        return $GLOBALS['container']['doctrine.orm.entityManager'];
+    }
 }
