@@ -29,14 +29,13 @@
 		"contao-community-alliance/event-dispatcher": "~1",
 		"doctrine/orm": "2.4.*",
 		"doctrine/migrations": "~1.0",
-		"beberlei/DoctrineExtensions": "dev-master",
+		"beberlei/DoctrineExtensions": "~1.0",
 		"jms/serializer": "~0.15",
 		"jdorn/sql-formatter": "~1.2"
 	},
 	"require-dev":{
 		"phpunit/phpunit":"3.7.*",
-		"squizlabs/php_codesniffer":"1.*",
-		"bit3/php-coding-standard":"@dev"
+		"squizlabs/php_codesniffer":"~2.3"
 	},
 	"conflict": {
 		"contao-community-alliance/dc-general": "<2.0.0-beta18"
