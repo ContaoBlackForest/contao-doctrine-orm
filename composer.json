@@ -1,22 +1,26 @@
 {
-	"name":"bit3/contao-doctrine-orm",
+	"name":"contaoblackforest/contao-doctrine-orm",
 	"description":"Doctrine ORM for Contao CMS",
 	"keywords":["contao", "doctrine", "orm"],
 	"type":"contao-module",
 	"license":"LGPL-3.0+",
 	"authors":[
-		{
-			"name":"Tristan Lins",
-			"email":"tristan.lins@bit3.de",
-			"homepage":"http://bit3.de",
-			"role":"Developer"
-		}
+      {
+        "name": "Sven Baumann",
+        "email": "baumann.sv@gmail.com",
+        "homepage": "",
+        "role": "Developer"
+      },
+      {
+        "name": "Dominik Tomasi",
+        "email": "dominik.tomasi@gmail.com",
+        "homepage": "",
+        "role": "Developer"
+      }
 	],
 	"support":{
-		"email":"info@bit3.de",
-		"issues":"https://github.com/bit3/contao-doctrine-orm/issues",
-		"irc":"irc://irc.freenode.org/contao.dev",
-		"source":"https://github.com/bit3/contao-doctrine-orm"
+      "issues": "https://github.com/ContaoBlackForest/contao-doctrine-orm/issues",
+      "source": "https://github.com/ContaoBlackForest/contao-doctrine-orm"
 	},
 	"require":{
 		"php":">=5.3",
