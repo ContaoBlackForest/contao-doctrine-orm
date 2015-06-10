@@ -24,7 +24,7 @@
 		"php":">=5.3",
 		"contao/core": ">=2.11.11,<4-dev",
 		"contaoblackforest/contao-doctrine-dbal": "~1.1",
-		"bit3/contao-logger": "~2.0",
+		"contaoblackforest/contao-logger": "~2.0",
 		"contao-community-alliance/composer-plugin": "~2.0",
 		"contao-community-alliance/event-dispatcher": "~1",
 		"doctrine/orm": "2.4.*",
