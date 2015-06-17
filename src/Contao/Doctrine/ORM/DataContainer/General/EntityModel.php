@@ -148,6 +148,8 @@ class EntityModel extends AbstractModel
         if ($entity) {
             $entityAccessor = $this->getEntityAccessor();
             $entityAccessor->setProperty($entity, $propertyName, $propertyValue);
+
+            $this->setMeta($this::IS_CHANGED, true);
         }
 
         return $this;
@@ -188,6 +190,8 @@ class EntityModel extends AbstractModel
         if ($entity) {
             $entityAccessor = $this->getEntityAccessor();
             $entityAccessor->setProperties($entity, $properties);
+
+            $this->setMeta($this::IS_CHANGED, true);
         }
 
         return $this;
@@ -239,12 +243,15 @@ class EntityModel extends AbstractModel
                     throw new DcGeneralInvalidArgumentException('The value for property ' . $name . ' is invalid.');
                 }
 
+
                 $entityAccessor->setProperty(
                     $entity,
                     $name,
                     $valueBag->getPropertyValue($name)
                 );
             }
+
+            $this->setMeta($this::IS_CHANGED, true);
         }
 
         return $this;
