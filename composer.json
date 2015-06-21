@@ -38,7 +38,7 @@
 		"squizlabs/php_codesniffer":"~2.3"
 	},
 	"conflict": {
-		"contao-community-alliance/dc-general": "<2.0.0-beta18"
+		"contao-community-alliance/dc-general": "<2.0.0-beta22"
 	},
 	"autoload":{
 		"psr-0":{
