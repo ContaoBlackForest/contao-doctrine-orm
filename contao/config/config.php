@@ -68,6 +68,7 @@ $GLOBALS['DOCTRINE_TYPE_MAP']['pageTree']           = array('nullable' => true, 
 $GLOBALS['DOCTRINE_TYPE_MAP']['pageTree_multiple']  = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
 $GLOBALS['DOCTRINE_TYPE_MAP']['fileTree']           = array('nullable' => true, 'type' => 'binaryString', 'length' => 512);
 $GLOBALS['DOCTRINE_TYPE_MAP']['fileTree_multiple']  = array('nullable' => true, 'type' => 'serializedBinary', 'length' => 65532);
+$GLOBALS['DOCTRINE_TYPE_MAP']['fileTreeOrder']      = array('nullable' => true, 'type' => 'serializedBinary', 'length' => 65532);
 $GLOBALS['DOCTRINE_TYPE_MAP']['tableWizard']        = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
 $GLOBALS['DOCTRINE_TYPE_MAP']['listWizard']         = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
 $GLOBALS['DOCTRINE_TYPE_MAP']['optionWizard']       = array('nullable' => true, 'type' => 'serialized', 'length' => 65532);
