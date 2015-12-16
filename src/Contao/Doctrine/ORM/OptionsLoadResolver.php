@@ -15,6 +15,9 @@
 
 namespace Contao\Doctrine\ORM;
 
+use Contao\Doctrine\ORM\DataContainer\General\EntityDataProvider;
+use ContaoCommunityAlliance\DcGeneral\Contao\Compatibility\DcCompat;
+
 /**
  *
  */
@@ -43,14 +46,34 @@ class OptionsLoadResolver
      * @param string $methodName
      * @param array  $args
      */
-    public function load($entities)
+    public function load($entities, DcCompat $compat)
     {
+        $providerName = $compat->getModel()->getProviderName();
+        $enviroment   = $compat->getEnvironment();
+        /** @var EntityDataProvider $dataProvider */
+        $dataProvider = $enviroment->getDataProvider($providerName);
+
+        $entityManager    = $dataProvider->getEntityManager();
+        $metaFactory      = $entityManager->getMetadataFactory();
+        $metaData         = $metaFactory->getMetadataFor($dataProvider->getEntityRepository()->getClassName());
+        $associationNames = $metaData->getAssociationNames();
+
         $entityAccessor = EntityHelper::getEntityAccessor();
         $ids            = array();
 
         if (is_array($entities) || $entities instanceof \Traversable) {
             foreach ($entities as $entity) {
-                $ids[] = $entityAccessor->getPrimaryKey($entity);
+                if (is_object($entity)) {
+                    $ids[] = $entityAccessor->getPrimaryKey($entity);
+
+                    continue;
+                }
+
+                if (!empty($associationNames)
+                    && in_array($compat->getPropertyName(), $associationNames)
+                ) {
+                    $ids[] = $entity;
+                }
             }
         }
 
