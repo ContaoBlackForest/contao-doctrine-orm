@@ -50,7 +50,13 @@ class OptionsLoadResolver
 
         if (is_array($entities) || $entities instanceof \Traversable) {
             foreach ($entities as $entity) {
-                $ids[] = $entityAccessor->getPrimaryKey($entity);
+                if (is_object($entity)) {
+                    $ids[] = $entityAccessor->getPrimaryKey($entity);
+
+                    continue;
+                }
+
+                $ids[] = $entity;
             }
         }
 
