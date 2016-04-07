@@ -122,6 +122,9 @@ class EntityModel extends AbstractModel
 
         if ($entity) {
             $entityAccessor = $this->getEntityAccessor();
+            if (!$entityAccessor->hasProperty($entity, $propertyName)){
+                return null;
+            }
             $value = $entityAccessor->getProperty($entity, $propertyName);
 
             if ($value instanceof EntityInterface) {
