@@ -98,6 +98,10 @@ class EntityAccessor
             $keyValues
         );
 
+        if (count($keyNames) < 2 && in_array($entity::PRIMARY_KEY, $keyNames)) {
+            return $keyValues[$entity::PRIMARY_KEY];
+        }
+
         return implode('|', $keyValues);
     }
 
