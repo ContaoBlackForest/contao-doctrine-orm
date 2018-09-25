@@ -45,8 +45,6 @@
 			"Contao\\Doctrine\\ORM": "src/"
 		}
 	},
-	"minimum-stability": "dev",
-	"prefer-stable": true,
 	"extra": {
 		"contao": {
 			"sources": {
